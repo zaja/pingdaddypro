@@ -21,8 +21,8 @@ import base64
 import hmac
 
 # Application version
-APP_VERSION = "1.0.2"
-BUILD_DATE = "2025-01-23"
+APP_VERSION = "1.0.3"
+BUILD_DATE = "2025-01-24"
 GIT_COMMIT = "ece612a"  # This can be updated during deployment
 import hashlib
 from io import BytesIO
