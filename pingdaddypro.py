@@ -1155,9 +1155,12 @@ Ping Daddy - Professional Website Monitoring
             if url.startswith('https://'):
                 # Check if we need to verify SSL certificate
                 last_ssl_check = self.ssl_last_check_times.get(url, 0)
+                print(f"DEBUG SSL: {url} - last_ssl_check: {last_ssl_check}, current_time: {current_time}, interval: {self.ssl_check_interval}")
                 if current_time - last_ssl_check >= self.ssl_check_interval:
+                    print(f"DEBUG SSL: Running SSL check for {url}")
                     ssl_info, ssl_status, _ = self.check_ssl_certificate(url)
                     self.ssl_last_check_times[url] = current_time
+                    print(f"DEBUG SSL: SSL check completed for {url}, status: {ssl_status}")
                     
                     # Check for SSL errors
                     if ssl_status == "Invalid":
