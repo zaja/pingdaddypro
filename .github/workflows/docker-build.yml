@@ -8,7 +8,7 @@ name: Build and Push to Docker Hub
 on:
   push:
     branches: [ main, master ]
-    tags: [ 'v*' ]
+    tags: [ 'v*', '1.*' ]
   pull_request:
     branches: [ main, master ]
 
@@ -52,17 +52,6 @@ jobs:
         file: ./Dockerfile
         push: true
         tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        
-    - name: Build and push development image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./Dockerfile.dev
-        push: true
-        tags: svejedobro/${{ env.DOCKER_HUB_REPOSITORY }}:dev
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
