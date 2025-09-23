@@ -1355,11 +1355,12 @@ Ping Daddy - Professional Website Monitoring
                     
                     # Check if status changed
                     if website not in self.website_status:
+                        current_time = datetime.now()
                         self.website_status[website] = {
                             'status': status,
                             'response_time': response_time,
                             'details': details,
-                            'last_check': datetime.now(),
+                            'last_check': current_time,
                             'consecutive_failures': 0,
                             'last_notification_status': None
                         }
