@@ -1,0 +1,33 @@
+# Include version file
+include VERSION
+
+# Include documentation
+include README.md
+include CHANGELOG.md
+include LICENSE
+include BRUTE-FORCE-FIX.md
+
+# Include Docker files
+include Dockerfile
+include Dockerfile.dev
+include docker-compose.yml
+include docker-compose.dev.yml
+include nginx.conf
+
+# Include installation script
+include install.sh
+
+# Include static files
+recursive-include static *
+recursive-include templates *
+
+# Include requirements
+include requirements.txt
+
+# Exclude development files
+exclude test_brute_force.py
+exclude update_version.py
+exclude *.pyc
+exclude __pycache__
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]

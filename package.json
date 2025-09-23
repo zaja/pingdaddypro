@@ -1,0 +1,34 @@
+{
+  "name": "pingdaddypro",
+  "version": "1.0.3",
+  "description": "Professional Website Monitoring Application",
+  "main": "pingdaddypro.py",
+  "scripts": {
+    "start": "python pingdaddypro.py",
+    "dev": "python pingdaddypro.py",
+    "test": "python -m pytest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zaja/pingdaddypro.git"
+  },
+  "keywords": [
+    "monitoring",
+    "website",
+    "uptime",
+    "ssl",
+    "performance",
+    "docker",
+    "flask",
+    "postgresql"
+  ],
+  "author": "svejedobro",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zaja/pingdaddypro/issues"
+  },
+  "homepage": "https://github.com/zaja/pingdaddypro#readme",
+  "engines": {
+    "python": ">=3.11"
+  }
+}

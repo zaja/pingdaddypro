@@ -1,0 +1,65 @@
+# PingDaddyPro Development Docker Compose Configuration
+# GitHub: https://github.com/zaja/pingdaddypro
+# Docker Hub: svejedobro/pingdaddypro
+# Version: 1.0.3
+#
+# Default Access Credentials:
+# Web Application: http://localhost:5000 (admin / admin123)
+# PostgreSQL: localhost:5432 (pingdaddypro / pingdaddypro)
+
+version: '3.8'
+
+networks:
+  pingdaddypro-network:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: pingdaddypro-dev-postgres
+    environment:
+      POSTGRES_DB: pingdaddypro
+      POSTGRES_USER: pingdaddypro
+      POSTGRES_PASSWORD: pingdaddypro
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - pingdaddypro-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pingdaddypro"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pingdaddypro-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: pingdaddypro-dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=true
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://pingdaddypro:pingdaddypro@postgres:5432/pingdaddypro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - pingdaddypro-network
+    command: python pingdaddypro.py
+
+volumes:
+  postgres_dev_data:
+
+
+
+

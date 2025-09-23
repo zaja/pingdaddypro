@@ -1,0 +1,18 @@
+# PingDaddyPro Python Dependencies
+# GitHub: https://github.com/zaja/pingdaddypro
+# Docker Hub: svejedobro/pingdaddypro
+# Version: 1.0.3
+
+Flask==2.3.3
+Flask-SocketIO==5.3.6
+requests==2.31.0
+bcrypt==4.0.1
+pytz==2023.3
+tzlocal==4.3.1
+matplotlib==3.8.2
+Pillow==10.0.0
+dnspython==2.4.2
+numpy>=1.24.0,<2.0.0
+psycopg2-binary==2.9.7
+SQLAlchemy==2.0.23
+python-dateutil==2.8.2

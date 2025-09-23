@@ -1,0 +1,3439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ping Daddy Pro</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* OVERRIDE BOOTSTRAP - Must be after Bootstrap CSS */
+        body.dark-theme button.nav-link.active {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: #ffffff !important;
+        }
+        body.dark-theme button.nav-link:not(.active) {
+            background-color: #21262d !important;
+            color: #e6edf3 !important;
+            border-color: #30363d !important;
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        /* Status colors for History table */
+        td.status-online { color: #28a745 !important; font-weight: bold !important; }
+        td.status-content-error { color: #ff8c00 !important; font-weight: bold !important; }
+        td.status-dns-error { color: #dc3545 !important; font-weight: bold !important; }
+        td.status-timeout-error { color: #dc3545 !important; font-weight: bold !important; }
+        td.status-ssl-error { color: #dc3545 !important; font-weight: bold !important; }
+        td.status-connection-error { color: #dc3545 !important; font-weight: bold !important; }
+        td.status-status-error { color: #dc3545 !important; font-weight: bold !important; }
+        td.status-performance-issue { color: #ffc107 !important; font-weight: bold !important; }
+        td.status-ssl-expiration { color: #dc3545 !important; font-weight: bold !important; }
+        td.status-unknown { color: #6c757d !important; font-weight: bold !important; }
+        
+        /* Status colors for Monitoring cards */
+        .card-text.status-online { color: #28a745 !important; font-weight: bold !important; }
+        .card-text.status-content-error { color: #ff8c00 !important; font-weight: bold !important; }
+        .card-text.status-dns-error { color: #dc3545 !important; font-weight: bold !important; }
+        .card-text.status-timeout-error { color: #dc3545 !important; font-weight: bold !important; }
+        .card-text.status-ssl-error { color: #dc3545 !important; font-weight: bold !important; }
+        .card-text.status-connection-error { color: #dc3545 !important; font-weight: bold !important; }
+        .card-text.status-status-error { color: #dc3545 !important; font-weight: bold !important; }
+        .card-text.status-performance-issue { color: #ffc107 !important; font-weight: bold !important; }
+        .card-text.status-ssl-expiration { color: #dc3545 !important; font-weight: bold !important; }
+        .card-text.status-unknown { color: #6c757d !important; font-weight: bold !important; }
+        
+        /* Dark theme status colors for History table */
+        body.dark-theme td.status-online { color: #4ade80 !important; font-weight: bold !important; }
+        body.dark-theme td.status-content-error { color: #fb923c !important; font-weight: bold !important; }
+        body.dark-theme td.status-dns-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme td.status-timeout-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme td.status-ssl-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme td.status-connection-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme td.status-status-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme td.status-performance-issue { color: #fbbf24 !important; font-weight: bold !important; }
+        body.dark-theme td.status-ssl-expiration { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme td.status-unknown { color: #9ca3af !important; font-weight: bold !important; }
+        
+        /* Additional specificity for History table in dark theme */
+        body.dark-theme table.table td.status-online { color: #4ade80 !important; font-weight: bold !important; }
+        body.dark-theme table.table td.status-content-error { color: #fb923c !important; font-weight: bold !important; }
+        body.dark-theme table.table td.status-dns-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme table.table td.status-timeout-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme table.table td.status-ssl-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme table.table td.status-connection-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme table.table td.status-status-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme table.table td.status-performance-issue { color: #fbbf24 !important; font-weight: bold !important; }
+        body.dark-theme table.table td.status-ssl-expiration { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme table.table td.status-unknown { color: #9ca3af !important; font-weight: bold !important; }
+        
+        /* Maximum specificity for History table status colors in light theme */
+        .table-striped tbody tr td.status-online { color: #28a745 !important; font-weight: bold !important; }
+        .table-striped tbody tr td.status-content-error { color: #ff8c00 !important; font-weight: bold !important; }
+        .table-striped tbody tr td.status-dns-error { color: #dc3545 !important; font-weight: bold !important; }
+        .table-striped tbody tr td.status-timeout-error { color: #dc3545 !important; font-weight: bold !important; }
+        .table-striped tbody tr td.status-ssl-error { color: #dc3545 !important; font-weight: bold !important; }
+        .table-striped tbody tr td.status-connection-error { color: #dc3545 !important; font-weight: bold !important; }
+        .table-striped tbody tr td.status-status-error { color: #dc3545 !important; font-weight: bold !important; }
+        .table-striped tbody tr td.status-performance-issue { color: #ffc107 !important; font-weight: bold !important; }
+        .table-striped tbody tr td.status-ssl-expiration { color: #dc3545 !important; font-weight: bold !important; }
+        .table-striped tbody tr td.status-unknown { color: #6c757d !important; font-weight: bold !important; }
+        
+        /* Ultra-specific CSS for light theme History table - should override everything */
+        div#history table.table.table-striped tbody tr td.status-online { color: #28a745 !important; font-weight: bold !important; }
+        div#history table.table.table-striped tbody tr td.status-content-error { color: #ff8c00 !important; font-weight: bold !important; }
+        div#history table.table.table-striped tbody tr td.status-dns-error { color: #dc3545 !important; font-weight: bold !important; }
+        div#history table.table.table-striped tbody tr td.status-timeout-error { color: #dc3545 !important; font-weight: bold !important; }
+        div#history table.table.table-striped tbody tr td.status-ssl-error { color: #dc3545 !important; font-weight: bold !important; }
+        div#history table.table.table-striped tbody tr td.status-connection-error { color: #dc3545 !important; font-weight: bold !important; }
+        div#history table.table.table-striped tbody tr td.status-status-error { color: #dc3545 !important; font-weight: bold !important; }
+        div#history table.table.table-striped tbody tr td.status-performance-issue { color: #ffc107 !important; font-weight: bold !important; }
+        div#history table.table.table-striped tbody tr td.status-ssl-expiration { color: #dc3545 !important; font-weight: bold !important; }
+        div#history table.table.table-striped tbody tr td.status-unknown { color: #6c757d !important; font-weight: bold !important; }
+        
+        /* Maximum specificity for History table status colors in dark theme */
+        body.dark-theme .table-striped tbody tr td.status-online { color: #4ade80 !important; font-weight: bold !important; }
+        body.dark-theme .table-striped tbody tr td.status-content-error { color: #fb923c !important; font-weight: bold !important; }
+        body.dark-theme .table-striped tbody tr td.status-dns-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .table-striped tbody tr td.status-timeout-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .table-striped tbody tr td.status-ssl-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .table-striped tbody tr td.status-connection-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .table-striped tbody tr td.status-status-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .table-striped tbody tr td.status-performance-issue { color: #fbbf24 !important; font-weight: bold !important; }
+        body.dark-theme .table-striped tbody tr td.status-ssl-expiration { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .table-striped tbody tr td.status-unknown { color: #9ca3af !important; font-weight: bold !important; }
+        
+        /* Ultra-specific CSS for dark theme History table - should override everything */
+        body.dark-theme div#history table.table.table-striped tbody tr td.status-online { color: #4ade80 !important; font-weight: bold !important; }
+        body.dark-theme div#history table.table.table-striped tbody tr td.status-content-error { color: #fb923c !important; font-weight: bold !important; }
+        body.dark-theme div#history table.table.table-striped tbody tr td.status-dns-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme div#history table.table.table-striped tbody tr td.status-timeout-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme div#history table.table.table-striped tbody tr td.status-ssl-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme div#history table.table.table-striped tbody tr td.status-connection-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme div#history table.table.table-striped tbody tr td.status-status-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme div#history table.table.table-striped tbody tr td.status-performance-issue { color: #fbbf24 !important; font-weight: bold !important; }
+        body.dark-theme div#history table.table.table-striped tbody tr td.status-ssl-expiration { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme div#history table.table.table-striped tbody tr td.status-unknown { color: #9ca3af !important; font-weight: bold !important; }
+        
+        /* Dark theme status colors for Monitoring cards */
+        body.dark-theme .card-text.status-online { color: #4ade80 !important; font-weight: bold !important; }
+        body.dark-theme .card-text.status-content-error { color: #fb923c !important; font-weight: bold !important; }
+        body.dark-theme .card-text.status-dns-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .card-text.status-timeout-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .card-text.status-ssl-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .card-text.status-connection-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .card-text.status-status-error { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .card-text.status-performance-issue { color: #fbbf24 !important; font-weight: bold !important; }
+        body.dark-theme .card-text.status-ssl-expiration { color: #f87171 !important; font-weight: bold !important; }
+        body.dark-theme .card-text.status-unknown { color: #9ca3af !important; font-weight: bold !important; }
+        .website-card { margin-bottom: 15px; }
+        .monitoring-active { background-color: #d4edda; }
+        .monitoring-inactive { background-color: #f8d7da; }
+        .card { margin-bottom: 20px; }
+        #performanceChart { 
+            max-width: 100%; 
+            height: 400px !important; 
+        }
+        .performance-stats-container {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 15px !important;
+            justify-content: space-between !important;
+            flex-direction: row !important;
+        }
+        .performance-stat-card { 
+            flex: 1 !important;
+            min-width: 150px !important;
+            max-width: 200px !important;
+            margin-bottom: 15px !important; 
+            border-left: 4px solid #007bff !important;
+            transition: transform 0.2s ease !important;
+            text-align: center !important;
+            display: block !important;
+            width: auto !important;
+        }
+        .performance-stat-card:hover { 
+            transform: translateY(-2px) !important; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+        }
+        .performance-stat-card .text-primary { border-left-color: #007bff !important; }
+        .performance-stat-card .text-danger { border-left-color: #dc3545 !important; }
+        .performance-stat-card .text-success { border-left-color: #28a745 !important; }
+        .performance-stat-card .text-info { border-left-color: #17a2b8 !important; }
+        .performance-stat-card .text-warning { border-left-color: #ffc107 !important; }
+        .performance-stat-card .text-secondary { border-left-color: #6c757d !important; }
+        .quick-stats-item { margin-bottom: 10px; }
+        .favicon { width: 24px; height: 24px; margin-right: 8px; }
+        .ssl-loading { color: #6c757d; font-style: italic; }
+        .ssl-valid { color: #28a745; }
+        .ssl-warning { color: #ffc107; }
+        .ssl-danger { color: #dc3545; }
+        .ssl-na { color: #6c757d; }
+        
+        /* Dark Theme Styles - Cursor GUI inspired */
+        body.dark-theme {
+            background-color: #0d1117;
+            color: #e6edf3;
+        }
+        .navbar {
+            background-color: #1b2129 !important;
+        }
+        body.dark-theme .navbar {
+            background-color: #1b2129 !important;
+            border-bottom: 1px solid #404040;
+        }
+        body.dark-theme .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            color: #e6edf3;
+        }
+        body.dark-theme .card-header {
+            background-color: #21262d;
+            border-bottom: 1px solid #30363d;
+            color: #e6edf3;
+        }
+        body.dark-theme .form-control, body.dark-theme .form-select {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            color: #e6edf3;
+        }
+        body.dark-theme .form-control:focus, body.dark-theme .form-select:focus {
+            background-color: #0d1117;
+            border-color: #21262d;
+            color: #e6edf3;
+            box-shadow: 0 0 0 0.2rem rgba(28, 52, 73, 0.25);
+        }
+        body.dark-theme .table {
+            color: #e6edf3 !important;
+        }
+        body.dark-theme .table-striped > tbody > tr:nth-of-type(odd) > td {
+            background-color: #0d1117 !important;
+            color: #e6edf3 !important;
+        }
+        body.dark-theme .table-striped > tbody > tr:nth-of-type(even) > td {
+            background-color: #161b22 !important;
+            color: #e6edf3 !important;
+        }
+        body.dark-theme .table > tbody > tr > td {
+            background-color: #161b22 !important;
+            border-color: #30363d !important;
+            color: #e6edf3 !important;
+        }
+        body.dark-theme .table > thead > tr > th {
+            background-color: #21262d !important;
+            border-color: #30363d !important;
+            color: #e6edf3 !important;
+        }
+        body.dark-theme .table > tbody > tr:hover > td {
+            background-color: #30363d !important;
+            color: #e6edf3 !important;
+        }
+        body.dark-theme td {
+            background-color: #161b22 !important;
+            color: #e6edf3 !important;
+        }
+        body.dark-theme th {
+            background-color: #21262d !important;
+            color: #e6edf3 !important;
+        }
+        body.dark-theme .modal-content {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            color: #e6edf3;
+        }
+        body.dark-theme .modal-header {
+            background-color: #21262d;
+            border-bottom: 1px solid #30363d;
+            color: #e6edf3;
+        }
+        body.dark-theme .modal-footer {
+            background-color: #21262d;
+            border-top: 1px solid #30363d;
+        }
+        body.dark-theme .footer {
+            background-color: #21262d !important;
+            border-top: 1px solid #30363d;
+            color: #e6edf3 !important;
+        }
+        body.dark-theme .nav-tabs .nav-link {
+            background-color: #21262d !important;
+            color: #e6edf3 !important;
+            border-color: #30363d !important;
+        }
+        
+        /* Ultra-specific override for inactive tabs */
+        body.dark-theme ul.nav.nav-tabs li.nav-item .nav-link {
+            background-color: #21262d !important;
+            color: #e6edf3 !important;
+            border-color: #30363d !important;
+        }
+        body.dark-theme .nav-tabs .nav-link {
+            background-color: #21262d !important;
+            color: #e6edf3 !important;
+            border-color: #30363d !important;
+        }
+        
+        /* Ultra-specific override for inactive tabs - button elements */
+        body.dark-theme ul.nav.nav-tabs li.nav-item button.nav-link {
+            background-color: #21262d !important;
+            color: #e6edf3 !important;
+            border-color: #30363d !important;
+        }
+        
+        /* Even more specific - target by ID */
+        body.dark-theme #myTab li.nav-item button.nav-link {
+            background-color: #21262d !important;
+            color: #e6edf3 !important;
+            border-color: #30363d !important;
+        }
+        
+        /* Active tab - button elements */
+        body.dark-theme ul.nav.nav-tabs li.nav-item button.nav-link.active {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: #ffffff !important;
+        }
+        body.dark-theme .nav-tabs .nav-link:hover {
+            color: #e6edf3;
+            border-color: #30363d;
+        }
+        
+        /* FINAL OVERRIDE - Must be last */
+        body.dark-theme #myTab button.nav-link:not(.active) {
+            background-color: #21262d !important;
+            color: #e6edf3 !important;
+            border-color: #30363d !important;
+        }
+        
+        body.dark-theme #myTab button.nav-link.active {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: #ffffff !important;
+        }
+        
+        /* Light Theme Active Tab */
+        /* Tab styling */
+        .nav-tabs .nav-link {
+            background-color: #f8f9fa !important;
+            border-color: #dee2e6 !important;
+            color: #495057 !important;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            background-color: #e9ecef !important;
+            border-color: #dee2e6 !important;
+            color: #495057 !important;
+        }
+        
+        body:not(.dark-theme) .nav-tabs .nav-link.active {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: #ffffff !important;
+        }
+        body:not(.dark-theme) .nav-tabs .nav-link.active:hover {
+            background-color: #218838 !important;
+            border-color: #218838 !important;
+            color: #ffffff !important;
+        }
+        body.dark-theme h1, body.dark-theme h2, body.dark-theme h3, 
+        body.dark-theme h4, body.dark-theme h5, body.dark-theme h6 {
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme .card-title {
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme .card-text {
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme .form-label {
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme .navbar-brand {
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme .nav-link {
+            background-color: #21262d !important;
+            color: #e6edf3 !important;
+            border-color: #30363d !important;
+        }
+        body.dark-theme .nav-link.active {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: #ffffff !important;
+        }
+        body.dark-theme .btn-outline-secondary {
+            color: #e0e0e0;
+            border-color: #555;
+        }
+        body.dark-theme .btn-outline-secondary:hover {
+            background-color: #555;
+            border-color: #666;
+            color: #e0e0e0;
+        }
+        body.dark-theme .text-muted {
+            color: #999 !important;
+        }
+        body.dark-theme .alert {
+            background-color: #3a3a3a;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+        body.dark-theme .alert-success {
+            background-color: #2d5a2d;
+            border-color: #3a7a3a;
+        }
+        body.dark-theme .alert-danger {
+            background-color: #5a2d2d;
+            border-color: #7a3a3a;
+        }
+        body.dark-theme .alert-warning {
+            background-color: #5a4d2d;
+            border-color: #7a6a3a;
+        }
+        body.dark-theme .alert-info {
+            background-color: #2d4a5a;
+            border-color: #3a6a7a;
+        }
+        body.dark-theme .performance-stat-card .card-title {
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme .performance-stat-card .card-text {
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme .performance-stat-card .h5 {
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme .text-primary {
+            color: #66b3ff !important;
+        }
+        body.dark-theme .text-danger {
+            color: #ff6b6b !important;
+        }
+        body.dark-theme .text-success {
+            color: #51cf66 !important;
+        }
+        body.dark-theme .text-info {
+            color: #74c0fc !important;
+        }
+        body.dark-theme .text-warning {
+            color: #ffd43b !important;
+        }
+        body.dark-theme .text-secondary {
+            color: #adb5bd !important;
+        }
+        footer.bg-dark {
+            background-color: #1b2129 !important;
+        }
+        body.dark-theme footer.bg-dark {
+            background-color: #1b2129 !important;
+        }
+        body.dark-theme .footer a {
+            color: #66b3ff !important;
+        }
+        body.dark-theme .footer a:hover {
+            color: #99ccff !important;
+        }
+        body.dark-theme .badge {
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme .badge.bg-success {
+            background-color: #28a745 !important;
+        }
+        body.dark-theme .badge.bg-danger {
+            background-color: #dc3545 !important;
+        }
+        body.dark-theme .badge.bg-warning {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+        }
+        body.dark-theme .badge.bg-info {
+            background-color: #17a2b8 !important;
+        }
+        body.dark-theme .badge.bg-secondary {
+            background-color: #6c757d !important;
+        }
+        body.dark-theme .list-group-item {
+            background-color: #2d2d2d;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+        body.dark-theme .list-group-item:hover {
+            background-color: #3a3a3a;
+        }
+        body.dark-theme .dropdown-menu {
+            background-color: #2d2d2d;
+            border-color: #404040;
+        }
+        body.dark-theme .dropdown-item {
+            color: #e0e0e0;
+        }
+        body.dark-theme .dropdown-item:hover {
+            background-color: #3a3a3a;
+            color: #e0e0e0;
+        }
+        body.dark-theme .pagination .page-link {
+            background-color: #2d2d2d;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+        body.dark-theme .pagination .page-link:hover {
+            background-color: #3a3a3a;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+        body.dark-theme .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        body.dark-theme .card-header.bg-info {
+            background-color: #1a4d5c !important;
+        }
+        body.dark-theme .card-header.bg-light {
+            background-color: #3a3a3a !important;
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme .card-header.bg-warning {
+            background-color: #5a4d2d !important;
+        }
+        body.dark-theme .card-header.bg-danger {
+            background-color: #5a2d2d !important;
+        }
+        body.dark-theme .card-header.bg-success {
+            background-color: #2d5a2d !important;
+        }
+        body.dark-theme .card-header.bg-secondary {
+            background-color: #4a4a4a !important;
+        }
+        .ssl-na { color: #6c757d; }
+        
+        /* Ping Daddy Branding */
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .navbar-brand i {
+            color: #00ff88;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .brand-gradient {
+            background: linear-gradient(45deg, #00d4ff, #ffaa00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .card-header h5 {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            border: none;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+        
+        .btn-warning {
+            background-color: #ffc107;
+            border: none;
+            color: #212529;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e0a800;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        }
+        
+        .btn-info {
+            background-color: #17a2b8;
+            border: none;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-info:hover {
+            background-color: #138496;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+        }
+        
+        /* Sticky Footer */
+        html, body {
+            height: 100%;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-content {
+            flex: 1;
+        }
+        
+        /* Logo Styling */
+        .logo-img {
+            height: 80px;
+            width: auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .logo-img:hover {
+            transform: scale(1.05);
+        }
+        
+        .logo-fallback {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background-color: #007bff;
+            border-radius: 8px;
+            margin-right: 10px;
+            position: relative;
+            animation: pulse 2s infinite;
+        }
+        
+        .logo-fallback::before {
+            content: "🛰️";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+        }
+        
+        /* ULTRA FINAL OVERRIDE - Must be absolutely last */
+        body.dark-theme button.nav-link.active {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: #ffffff !important;
+        }
+        body.dark-theme button.nav-link:not(.active) {
+            background-color: #21262d !important;
+            color: #e6edf3 !important;
+            border-color: #30363d !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="/static/pingdaddylogo.png" alt="Ping Daddy Logo" class="logo-img">
+                <span class="ms-2 text-light small">v<span id="navbar-version">Loading...</span></span>
+            </a>
+            <span class="navbar-text ms-auto" id="monitorStatus">
+                <span class="badge bg-danger">Stopped</span>
+            </span>
+                <div class="navbar-text ms-3" id="userInfo" style="display: none;">
+                    <span class="text-light me-2" id="usernameDisplay"></span>
+                    <button class="btn btn-outline-light btn-sm me-1" onclick="showChangePasswordModal()">Change Password</button>
+                    <button class="btn btn-outline-light btn-sm" onclick="performLogout()">Logout</button>
+                </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Monitoring Control</h5>
+                    </div>
+                    <div class="card-body">
+                        <button id="startMonitor" class="btn btn-success w-100 mb-2">
+                            <i class="fas fa-play"></i> Start Monitoring
+                        </button>
+                        <button id="stopMonitor" class="btn btn-danger w-100" disabled>
+                            <i class="fas fa-stop"></i> Stop Monitoring
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title">Quick Stats</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="statsContent">
+                            <p class="text-center">Monitoring not active</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="monitoring-tab" data-bs-toggle="tab" data-bs-target="#monitoring" type="button" role="tab">Monitoring</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">History</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">Performance</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="webhooks-tab" data-bs-toggle="tab" data-bs-target="#webhooks" type="button" role="tab">Webhooks</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">Settings</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button" role="tab">Backup/Reset</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade show active" id="monitoring" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="card-title">Website Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="websitesStatus" class="row">
+                                    <p class="text-center">No websites configured or monitoring not active</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="history" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="card-title">Monitoring History</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Filteri -->
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <label for="historyWebsiteFilter" class="form-label">Filter by Website</label>
+                                        <select class="form-select" id="historyWebsiteFilter">
+                                            <option value="">All Websites</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="historyStatusFilter" class="form-label">Filter by Status</label>
+                                        <select class="form-select" id="historyStatusFilter">
+                                            <option value="">All Statuses</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="historyDateFrom" class="form-label">From Date</label>
+                                        <input type="date" class="form-control" id="historyDateFrom">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="historyDateTo" class="form-label">To Date</label>
+                                        <input type="date" class="form-control" id="historyDateTo">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button id="applyHistoryFilter" class="btn btn-primary w-100">Apply Filter</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Statistika i paginacija -->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div id="historyStats">Showing 0 of 0 records</div>
+                                    <div>
+                                        <button id="exportHistory" class="btn btn-success btn-sm me-2">
+                                            <i class="fas fa-download me-1"></i>Export CSV
+                                        </button>
+                                        <select id="historyItemsPerPage" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                                            <option value="100" selected>100 per page</option>
+                                            <option value="150">150 per page</option>
+                                            <option value="200">200 per page</option>
+                                            <option value="250">250 per page</option>
+                                            <option value="300">300 per page</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Website</th>
+                                            <th>Status</th>
+                                            <th>Response Time</th>
+                                            <th>Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTable">
+                                        <!-- History data will be populated here -->
+                                    </tbody>
+                                </table>
+                                
+                                <!-- Pagination -->
+                                <nav aria-label="History pagination" id="historyPaginationContainer" style="display: none;">
+                                    <ul class="pagination justify-content-center" id="historyPagination">
+                                        <!-- Pagination buttons will be generated here -->
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="performance" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="card-title">Performance Analysis</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <select id="performanceWebsite" class="form-select">
+                                            <option value="">Select Website</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select id="performanceRange" class="form-select">
+                                            <option value="1">Last 1 hour</option>
+                                            <option value="6">Last 6 hours</option>
+                                            <option value="12">Last 12 hours</option>
+                                            <option value="24" selected>Last 24 hours</option>
+                                            <option value="48">Last 48 hours</option>
+                                            <option value="72">Last 72 hours</option>
+                                            <option value="168">Last 7 days</option>
+                                            <option value="336">Last 14 days</option>
+                                            <option value="720">Last 30 days</option>
+                                            <option value="1440">Last 60 days</option>
+                                            <option value="2160">Last 90 days</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button id="loadPerformance" class="btn btn-primary w-100">Load Performance Data</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Performance Statistics Boxes -->
+                                <div id="performanceStats" class="mb-4" style="display: none;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between;">
+                                        <div class="card" style="flex: 1; min-width: 150px; max-width: 200px; text-align: center; border-left: 4px solid #007bff;">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-primary">Avg Response</h6>
+                                                <p id="avgResponse" class="card-text h5">0 ms</p>
+                                            </div>
+                                        </div>
+                                        <div class="card" style="flex: 1; min-width: 150px; max-width: 200px; text-align: center; border-left: 4px solid #dc3545;">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-danger">Max Response</h6>
+                                                <p id="maxResponse" class="card-text h5">0 ms</p>
+                                            </div>
+                                        </div>
+                                        <div class="card" style="flex: 1; min-width: 150px; max-width: 200px; text-align: center; border-left: 4px solid #28a745;">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-success">Min Response</h6>
+                                                <p id="minResponse" class="card-text h5">0 ms</p>
+                                    </div>
+                                        </div>
+                                        <div class="card" style="flex: 1; min-width: 150px; max-width: 200px; text-align: center; border-left: 4px solid #17a2b8;">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-info">Uptime</h6>
+                                                <p id="uptimePercentage" class="card-text h5">0%</p>
+                                            </div>
+                                        </div>
+                                        <div class="card" style="flex: 1; min-width: 150px; max-width: 200px; text-align: center; border-left: 4px solid #ffc107;">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-warning">Total Checks</h6>
+                                                <p id="totalChecks" class="card-text h5">0</p>
+                                    </div>
+                                        </div>
+                                        <div class="card" style="flex: 1; min-width: 150px; max-width: 200px; text-align: center; border-left: 4px solid #6c757d;">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-secondary">Error Rate</h6>
+                                                <p id="errorRate" class="card-text h5">0%</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <canvas id="performanceChart" width="400" height="200"></canvas>
+                                    <div id="performanceChartFallback" style="display: none;">
+                                        <img id="performanceChartImg" src="" alt="Performance Chart" style="max-width: 100%; height: auto;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Backup/Reset Tab - Complete Functionality -->
+                    <div class="tab-pane fade" id="backup" role="tabpanel">
+                        <div class="mt-3">
+                            <h3>Backup & Reset</h3>
+                            <p>Manage your application data backup and reset options.</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card border-success">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-download fa-2x text-success mb-3"></i>
+                                            <h5 class="card-title">Export Complete Backup</h5>
+                                            <p class="card-text">Download all settings, websites, and webhooks as a JSON file.</p>
+                                            <button type="button" id="exportBackup" class="btn btn-success">
+                                                <i class="fas fa-download me-2"></i>Export Backup
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card border-info">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-upload fa-2x text-info mb-3"></i>
+                                            <h5 class="card-title">Import Backup</h5>
+                                            <p class="card-text">Restore from a previously exported backup file.</p>
+                                            <button type="button" id="importBackup" class="btn btn-info">
+                                                <i class="fas fa-upload me-2"></i>Import Backup
+                                            </button>
+                                            <input type="file" id="importBackupFile" accept=".json" style="display: none;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-4">
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card border-warning">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-undo fa-2x text-warning mb-3"></i>
+                                            <h5 class="card-title">Reset Settings Only</h5>
+                                            <p class="card-text">Reset only application settings to default values. Keep websites and webhooks.</p>
+                                            <button type="button" id="resetSettingsOnly" class="btn btn-warning">
+                                                <i class="fas fa-undo me-2"></i>Reset Settings
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card border-danger">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-trash fa-2x text-danger mb-3"></i>
+                                            <h5 class="card-title">Reset Everything</h5>
+                                            <p class="card-text">Reset ALL data including settings, websites, and webhooks to default values.</p>
+                                            <button type="button" id="resetEverything" class="btn btn-danger">
+                                                <i class="fas fa-trash me-2"></i>Reset Everything
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="webhooks" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="card-title">Webhook Management</h5>
+                            </div>
+                            <div class="card-body">
+                                <button id="addWebhook" class="btn btn-primary mb-3">
+                                    <i class="fas fa-plus"></i> Add Webhook
+                                </button>
+                                
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>URL</th>
+                                            <th>Events</th>
+                                            <th>Active</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="webhooksTable">
+                                        <!-- Webhooks data will be populated here -->
+                                    </tbody>
+                                </table>
+                                
+                                        </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="settings" role="tabpanel">
+                        <div class="card mt-3">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="card-title mb-0"><i class="fas fa-cog me-2"></i>Monitoring Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="settingsForm">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="checkInterval" class="form-label">Check Interval (seconds)</label>
+                                            <input type="number" class="form-control" id="checkInterval" value="60" min="10" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="timeout" class="form-label">Timeout (seconds)</label>
+                                            <input type="number" class="form-control" id="timeout" value="5" min="1" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="expectedStatus" class="form-label">Expected HTTP Status</label>
+                                            <input type="number" class="form-control" id="expectedStatus" value="200" min="100" max="599" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="performanceThreshold" class="form-label">Performance Threshold (ms)</label>
+                                            <input type="number" class="form-control" id="performanceThreshold" value="1000" min="100" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="consecutiveChecks" class="form-label">Consecutive Checks for Notification</label>
+                                            <input type="number" class="form-control" id="consecutiveChecks" value="2" min="1" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="sslCheckInterval" class="form-label">SSL Check Interval (seconds)</label>
+                                            <input type="number" class="form-control" id="sslCheckInterval" value="3600" min="300" required>
+                                            <small class="form-text text-muted">How often to check SSL certificates (default: 1 hour)</small>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-12">
+                                            <label for="websitesList" class="form-label">Websites to Monitor (one per line, format: URL|expected_text)</label>
+                                            <textarea class="form-control" id="websitesList" rows="4" placeholder="https://example.com|Expected text&#10;https://another-example.com"></textarea>
+                                        <div class="form-text">Enter websites in format: URL|expected_text (optional)</div>
+                                    </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Notification Settings Card -->
+                        <div class="card mt-3">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="card-title mb-0"><i class="fas fa-bell me-2"></i>Notification Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="notificationMethod" class="form-label">Notification Method</label>
+                                            <select class="form-select" id="notificationMethod">
+                                                <option value="email">Email Only</option>
+                                                <option value="webhook">Webhook Only</option>
+                                                <option value="both" selected>Both Email and Webhook</option>
+                                            </select>
+                                    </div>
+                                </div>
+                                        </div>
+                                    </div>
+									
+                        <!-- Time Settings Card -->
+                        <div class="card mt-3">
+                            <div class="card-header bg-light text-dark">
+                                <h5 class="card-title mb-0"><i class="fas fa-clock me-2"></i>Time Settings</h5>
+                            </div>
+                            <div class="card-body">
+									<div class="row mb-3">
+										<div class="col-md-6">
+											<label for="timezone" class="form-label">Timezone</label>
+											<select class="form-select" id="timezone">
+                                            <option value="UTC">Loading timezones...</option>
+											</select>
+										</div>
+										<div class="col-md-6">
+											<label for="timeFormat" class="form-label">Time Format</label>
+											<select class="form-select" id="timeFormat">
+												<option value="%Y-%m-%d %H:%M:%S">YYYY-MM-DD HH:MM:SS</option>
+												<option value="%d.%m.%Y %H:%M:%S">DD.MM.YYYY HH:MM:SS</option>
+												<option value="%m/%d/%Y %I:%M:%S %p">MM/DD/YYYY HH:MM:SS AM/PM</option>
+											</select>
+                                    </div>
+                                </div>
+										</div>
+									</div>
+
+                        <!-- Theme Settings Card -->
+                        <div class="card mt-3">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="card-title mb-0"><i class="fas fa-palette me-2"></i>Theme Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="theme" class="form-label">Theme</label>
+                                        <select class="form-select" id="theme">
+                                            <option value="light">Light Theme</option>
+                                            <option value="dark">Dark Theme</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email Settings Card -->
+                        <div class="card mt-3">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="card-title mb-0"><i class="fas fa-envelope me-2"></i>Email Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="smtpServer" class="form-label">SMTP Server</label>
+                                            <input type="text" class="form-control" id="smtpServer" placeholder="smtp.gmail.com">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="smtpPort" class="form-label">SMTP Port</label>
+                                            <input type="number" class="form-control" id="smtpPort" value="587">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="smtpSecurity" class="form-label">SMTP Security</label>
+                                            <select class="form-select" id="smtpSecurity">
+                                                <option value="TLS">TLS</option>
+                                                <option value="SSL">SSL</option>
+                                                <option value="NONE">None</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="smtpUser" class="form-label">SMTP Username</label>
+                                            <input type="text" class="form-control" id="smtpUser" placeholder="your-email@gmail.com">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="smtpPass" class="form-label">SMTP Password</label>
+                                            <input type="password" class="form-control" id="smtpPass" placeholder="Your password">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="recipientEmail" class="form-label">Recipient Email</label>
+                                            <input type="email" class="form-control" id="recipientEmail" placeholder="recipient@example.com">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="fromName" class="form-label">From Name</label>
+                                            <input type="text" class="form-control" id="fromName" placeholder="Ping Daddy">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="subjectPrefix" class="form-label">Subject Prefix</label>
+                                            <input type="text" class="form-control" id="subjectPrefix" value="Ping Daddy:">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-12">
+                                            <label class="form-label">Email Events</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="emailOnline" checked>
+                                                <label class="form-check-label" for="emailOnline">Back Online</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="emailOffline" checked>
+                                                <label class="form-check-label" for="emailOffline">Offline</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="emailContentError" checked>
+                                                <label class="form-check-label" for="emailContentError">Content Error</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="emailPerformance" checked>
+                                                <label class="form-check-label" for="emailPerformance">Performance</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="emailSSLExpire" checked>
+                                                <label class="form-check-label" for="emailSSLExpire">SSL Expiration</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <button type="button" id="testSmtp" class="btn btn-outline-primary">Test SMTP</button>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button type="submit" form="settingsForm" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-save me-2"></i>Save All Settings
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Webhook Modal -->
+    <div class="modal fade" id="webhookModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Webhook Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="webhookModalForm">
+                        <input type="hidden" id="modalWebhookId">
+                        <div class="mb-3">
+                            <label for="modalWebhookName" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="modalWebhookName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="modalWebhookUrl" class="form-label">URL</label>
+                            <input type="url" class="form-control" id="modalWebhookUrl" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="modalWebhookSecret" class="form-label">Secret (optional)</label>
+                            <input type="text" class="form-control" id="modalWebhookSecret">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Events</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="modalWebhookOnline" checked>
+                                <label class="form-check-label" for="modalWebhookOnline">Back Online</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="modalWebhookOffline" checked>
+                                <label class="form-check-label" for="modalWebhookOffline">Offline</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="modalWebhookTextMissing" checked>
+                                <label class="form-check-label" for="modalWebhookTextMissing">Text Missing</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="modalWebhookPerformance" checked>
+                                <label class="form-check-label" for="modalWebhookPerformance">Performance</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="modalWebhookSSLExpire" checked>
+                                <label class="form-check-label" for="modalWebhookSSLExpire">SSL Expiration</label>
+                            </div>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="modalWebhookActive" checked>
+                            <label class="form-check-label" for="modalWebhookActive">Active</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveWebhookModal">Save Webhook</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Webhook Modal -->
+    <div class="modal fade" id="testWebhookModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Test Webhook</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="testWebhookForm">
+                        <input type="hidden" id="testWebhookId">
+                        <div class="mb-3">
+                            <label for="testWebhookUrl" class="form-label">Webhook URL</label>
+                            <input type="url" class="form-control" id="testWebhookUrl" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="testStatus" class="form-label">Status</label>
+                            <select class="form-select" id="testStatus">
+                                <option value="Back Online">Back Online</option>
+                                <option value="Offline">Offline</option>
+                                <option value="Content Error">Content Error</option>
+                                <option value="Performance">Performance</option>
+                                <option value="SSL Expiration">SSL Expiration</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="testWebsite" class="form-label">Website</label>
+                            <input type="url" class="form-control" id="testWebsite" value="https://example.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="testResponseTime" class="form-label">Response Time (ms)</label>
+                            <input type="number" class="form-control" id="testResponseTime" value="150" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="testDetails" class="form-label">Details</label>
+                            <textarea class="form-control" id="testDetails" rows="3">Test notification from webhook tester</textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="sendTestWebhook()">Send Test</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" required minlength="8">
+                            <div class="form-text">Password must be at least 8 characters long</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" required minlength="8">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="performChangePassword()">Change Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Admin Login</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="loginUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="rememberMe">
+                                <label class="form-check-label" for="rememberMe">Remember me</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="performLogin()">Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script>
+        let currentHistoryPage = 1;
+        let currentHistoryLimit = 100;
+        let currentHistoryFilters = { website: '', status: '', dateFrom: '', dateTo: '' };
+        let totalHistoryPages = 1;
+        let isMonitoring = false;
+        let statusInterval = null;
+        
+        // WebSocket variables
+        let socket = null;
+        let useWebSocket = true; // Flag to enable/disable WebSocket
+        
+        // SSL WebSocket variables
+        let sslData = {}; // Store SSL data received via WebSocket
+        let sslTimeoutSet = false; // Prevent multiple timeouts
+        let sslDataReceived = false; // Track if SSL data was received
+        let sslDataLoaded = false; // Track if SSL data has been successfully loaded
+        
+        
+        // WebSocket functions
+        function initializeWebSocket() {
+            if (!useWebSocket) return;
+            
+            try {
+                socket = io();
+                
+                socket.on('connect', function() {
+                    console.log('WebSocket connected');
+                    sslDataReceived = false;
+                    sslTimeoutSet = false;
+                    
+                    // Request initial status
+                    console.log('Requesting initial status...');
+                    socket.emit('request_status');
+                    
+                    // Wait for status update to create SSL elements, then request SSL data
+                    setTimeout(function() {
+                        const sslElements = document.querySelectorAll('[id^="ssl-info-"]');
+                        console.log(`Found ${sslElements.length} SSL elements, requesting SSL info...`);
+                        if (sslElements.length > 0) {
+                            socket.emit('request_ssl_info');
+                        } else {
+                            console.log('No SSL elements found, waiting another second...');
+                            setTimeout(function() {
+                                socket.emit('request_ssl_info');
+                            }, 1000);
+                        }
+                    }, 1000); // Wait 1 second for status update to complete
+                    
+                    // Set timeout for SSL data only once
+                    if (!sslTimeoutSet) {
+                        sslTimeoutSet = true;
+                        setTimeout(function() {
+                            if (!sslDataReceived) {
+                                console.log('SSL data timeout, falling back to HTTP API');
+                                loadSSLDataViaHTTP();
+                            }
+                        }, 10000); // 10 second timeout
+                    }
+                });
+                
+                socket.on('disconnect', function() {
+                    console.log('WebSocket disconnected');
+                    sslDataReceived = false;
+                    sslTimeoutSet = false;
+                    
+                    // Fallback to polling if WebSocket fails
+                    if (isMonitoring) {
+                        startStatusUpdates();
+                    }
+                    
+                    // Try HTTP fallback for SSL data if not received
+                    if (!sslDataReceived) {
+                        setTimeout(function() {
+                            loadSSLDataViaHTTP();
+                        }, 2000); // Wait 2 seconds before trying HTTP fallback
+                    }
+                });
+                
+                socket.on('status_update', function(data) {
+                    console.log('Received WebSocket status update:', data);
+                    updateWebsitesStatus(data);
+                    updateQuickStats(data);
+                });
+                
+                socket.on('ssl_update', function(data) {
+                    console.log('Received WebSocket SSL update:', data);
+                    updateSSLStatus(data.website, data.ssl_info, data.ssl_status);
+                });
+                
+                socket.on('ssl_data', function(data) {
+                    console.log('Received WebSocket SSL data:', data);
+                    console.log('SSL data keys:', Object.keys(data));
+                    console.log('SSL data length:', Object.keys(data).length);
+                    console.log('SSL data details:', JSON.stringify(data, null, 2));
+                    sslDataReceived = true; // Mark that we received SSL data
+                    
+                    if (Object.keys(data).length === 0) {
+                        console.log('No SSL data received, checking if websites are HTTPS');
+                        // Update all HTTPS websites to show "No data available"
+                        const sslElements = document.querySelectorAll('[id^="ssl-info-"]');
+                        console.log('Found SSL elements:', sslElements.length);
+                        sslElements.forEach(element => {
+                            // Extract website URL from element ID
+                            const id = element.id.replace('ssl-info-', '');
+                            // Convert back from sanitized ID to URL
+                            const website = id.replace(/-/g, '/').replace(/\/\//g, '://');
+                            console.log('Processing SSL element for website:', website);
+                            if (website.startsWith('https://')) {
+                                element.innerHTML = '<span class="ssl-na">No data available</span>';
+                            }
+                        });
+                    } else {
+                        console.log('Processing SSL data for websites:', Object.keys(data));
+                        for (const [website, sslInfo] of Object.entries(data)) {
+                            console.log(`Updating SSL status for ${website}:`, sslInfo);
+                            console.log(`About to call updateSSLStatus for ${website}`);
+                            // Try to update SSL status, if element doesn't exist, wait and try again
+                            const result = updateSSLStatus(website, sslInfo, 'Valid');
+                            console.log(`updateSSLStatus result for ${website}:`, result);
+                            if (!result) {
+                                console.log(`SSL element not found for ${website}, will retry in 1 second`);
+                                setTimeout(() => {
+                                    console.log(`Retrying updateSSLStatus for ${website}`);
+                                    updateSSLStatus(website, sslInfo, 'Valid');
+                                }, 1000);
+                            }
+                        }
+                    }
+                });
+                
+                
+                socket.on('connect_error', function(error) {
+                    console.log('WebSocket connection error:', error);
+                    sslDataReceived = false;
+                    sslTimeoutSet = false;
+                    
+                    // Fallback to polling
+                    if (isMonitoring) {
+                        startStatusUpdates();
+                    }
+                    
+                    // Try HTTP fallback for SSL data
+                    setTimeout(function() {
+                        loadSSLDataViaHTTP();
+                    }, 2000); // Wait 2 seconds before trying HTTP fallback
+                });
+                
+            } catch (error) {
+                console.error('Error initializing WebSocket:', error);
+                sslDataReceived = false;
+                sslTimeoutSet = false;
+                
+                // Fallback to polling
+                if (isMonitoring) {
+                    startStatusUpdates();
+                }
+                
+                // Try HTTP fallback for SSL data
+                setTimeout(function() {
+                    loadSSLDataViaHTTP();
+                }, 2000); // Wait 2 seconds before trying HTTP fallback
+            }
+        }
+        
+        function disconnectWebSocket() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+        }
+        
+        function forceTabStyling() {
+            const navLinks = document.querySelectorAll('#myTab button.nav-link');
+            navLinks.forEach(function(link) {
+                // Reset all styles first
+                link.style.removeProperty('background-color');
+                link.style.removeProperty('border-color');
+                link.style.removeProperty('color');
+                
+                if (document.body.classList.contains('dark-theme')) {
+                    // Dark theme styling
+                    if (link.classList.contains('active')) {
+                        link.style.setProperty('background-color', '#28a745', 'important');
+                        link.style.setProperty('border-color', '#28a745', 'important');
+                        link.style.setProperty('color', '#ffffff', 'important');
+                        console.log('Applied green to active tab:', link.textContent);
+                    } else {
+                        link.style.setProperty('background-color', '#21262d', 'important');
+                        link.style.setProperty('color', '#e6edf3', 'important');
+                        link.style.setProperty('border-color', '#30363d', 'important');
+                    }
+                } else {
+                    // Light theme - let CSS handle it, just ensure active tab is green
+                    if (link.classList.contains('active')) {
+                        link.style.setProperty('background-color', '#28a745', 'important');
+                        link.style.setProperty('border-color', '#28a745', 'important');
+                        link.style.setProperty('color', '#ffffff', 'important');
+                    }
+                }
+            });
+        }
+        
+        // Add event listener for tab changes
+        function setupTabListeners() {
+            const tabButtons = document.querySelectorAll('#myTab button[data-bs-toggle="tab"]');
+            tabButtons.forEach(function(button) {
+                button.addEventListener('shown.bs.tab', function() {
+                    setTimeout(function() {
+                        forceTabStyling();
+                    }, 50);
+                });
+            });
+        }
+
+        function loadVersion() {
+            fetch('/api/version')
+                .then(response => response.json())
+                .then(data => {
+                    const versionElement = document.getElementById('app-version');
+                    const navbarVersionElement = document.getElementById('navbar-version');
+                    
+                    if (versionElement) {
+                        versionElement.textContent = data.version;
+                        versionElement.setAttribute('data-bs-original-title', 
+                            `Build: ${data.build_date}\nCommit: ${data.git_commit}\nFull: ${data.full_version}`);
+                        versionElement.setAttribute('title', 
+                            `Build: ${data.build_date}\nCommit: ${data.git_commit}\nFull: ${data.full_version}`);
+                    }
+                    if (navbarVersionElement) {
+                        navbarVersionElement.textContent = data.version;
+                    }
+                    // Update browser tab title with version
+                    document.title = 'Ping Daddy Pro v' + data.version;
+                    
+                    // Re-initialize tooltips after updating content
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading version:', error);
+                    const versionElement = document.getElementById('app-version');
+                    const navbarVersionElement = document.getElementById('navbar-version');
+                    
+                    if (versionElement) {
+                        versionElement.textContent = 'Unknown';
+                        versionElement.setAttribute('title', 'Version information unavailable');
+                    }
+                    if (navbarVersionElement) {
+                        navbarVersionElement.textContent = 'Unknown';
+                    }
+                    // Update browser tab title with unknown version
+                    document.title = 'Ping Daddy Pro vUnknown';
+                });
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current year in footer
+            document.getElementById('footer-year').textContent = new Date().getFullYear();
+            
+            // Check authentication first
+            checkAuthStatus();
+            
+            // Load version information
+            loadVersion();
+            
+            // Force tab styling with JavaScript
+            setTimeout(function() {
+                forceTabStyling();
+                setupTabListeners();
+            }, 100);
+            
+            // Load timezones first, then load settings (only if authenticated)
+            loadTimezones(function() {
+                // Settings will be loaded in showAuthenticatedUI if user is authenticated
+            });
+            
+            setupEventListeners();
+            
+            // Add tab switching event listeners
+            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(event) {
+                    const targetTab = event.target.getAttribute('data-bs-target');
+                    if (targetTab === '#history') {
+                        console.log('DEBUG: History tab activated, loading history...');
+                        loadHistoryStatuses();
+                        setDefaultDateRange();
+                        loadHistory();
+                    }
+                });
+            });
+        });
+
+        // Simple tab initialization
+        function initializeTabs() {
+            // Remove custom tab initialization - let Bootstrap handle it naturally
+            console.log('Tabs initialized');
+        }
+
+        function setupEventListeners() {
+            
+            // Monitoring controls
+            document.getElementById('startMonitor').addEventListener('click', startMonitoring);
+            document.getElementById('stopMonitor').addEventListener('click', stopMonitoring);
+            
+            // Settings form
+            document.getElementById('settingsForm').addEventListener('submit', saveSettings);
+            document.getElementById('testSmtp').addEventListener('click', testSmtpSettings);
+            document.getElementById('theme').addEventListener('change', function() {
+                console.log('Theme changed to:', this.value);
+                applyTheme(this.value);
+            });
+            
+            // Backup/Reset buttons
+            document.getElementById('exportBackup').addEventListener('click', exportCompleteBackup);
+            document.getElementById('importBackup').addEventListener('click', function() {
+                document.getElementById('importBackupFile').click();
+            });
+            document.getElementById('importBackupFile').addEventListener('change', importCompleteBackup);
+            document.getElementById('resetSettingsOnly').addEventListener('click', resetSettingsOnly);
+            document.getElementById('resetEverything').addEventListener('click', resetEverything);
+            
+            // History filters
+            document.getElementById('applyHistoryFilter').addEventListener('click', applyHistoryFilter);
+            document.getElementById('exportHistory').addEventListener('click', exportHistory);
+            document.getElementById('historyItemsPerPage').addEventListener('change', function() {
+                currentHistoryLimit = parseInt(this.value);
+                currentHistoryPage = 1; // Reset to first page when changing page size
+                loadHistory();
+            });
+            
+            // Performance
+            document.getElementById('loadPerformance').addEventListener('click', loadPerformanceData);
+            
+            // Webhooks
+            document.getElementById('addWebhook').addEventListener('click', showAddWebhookForm);
+            document.getElementById('webhookModalForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveWebhookFromModal();
+            });
+            document.getElementById('saveWebhookModal').addEventListener('click', saveWebhookFromModal);
+        }
+
+        function checkMonitoringStatus() {
+            fetch('/api/is-monitoring')
+                .then(response => response.json())
+                .then(data => {
+                    isMonitoring = data.is_monitoring;
+                    updateMonitorStatusUI();
+                    // Always initialize WebSocket to get SSL data
+                    initializeWebSocket();
+                    if (isMonitoring) {
+                        startStatusUpdates();
+                    }
+                })
+                .catch(error => console.error('Error checking monitoring status:', error));
+        }
+
+        function startMonitoring() {
+            fetch('/api/start', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        isMonitoring = true;
+                        updateMonitorStatusUI();
+                        // Initialize WebSocket and start updates
+                        initializeWebSocket();
+                        startStatusUpdates();
+                    }
+                })
+                .catch(error => console.error('Error starting monitoring:', error));
+        }
+
+        function stopMonitoring() {
+            fetch('/api/stop', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        isMonitoring = false;
+                        updateMonitorStatusUI();
+                        stopStatusUpdates();
+                        // Disconnect WebSocket when stopping monitoring
+                        disconnectWebSocket();
+                    }
+                })
+                .catch(error => console.error('Error stopping monitoring:', error));
+        }
+
+        function updateMonitorStatusUI() {
+            const startBtn = document.getElementById('startMonitor');
+            const stopBtn = document.getElementById('stopMonitor');
+            const statusBadge = document.getElementById('monitorStatus');
+            
+            if (isMonitoring) {
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                statusBadge.innerHTML = '<span class="badge bg-success">Running</span>';
+            } else {
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                statusBadge.innerHTML = '<span class="badge bg-danger">Stopped</span>';
+            }
+        }
+
+        function startStatusUpdates() {
+            if (useWebSocket && socket && socket.connected) {
+                // Use WebSocket - no need for polling
+                console.log('Using WebSocket for status updates');
+                return;
+            }
+            
+            // Fallback to polling if WebSocket is not available
+            console.log('Using polling for status updates');
+            if (statusInterval) clearInterval(statusInterval);
+            statusInterval = setInterval(updateStatus, 2000);
+            updateStatus();
+        }
+
+        function stopStatusUpdates() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+                statusInterval = null;
+            }
+        }
+
+        function updateStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    updateWebsitesStatus(data);
+                    updateQuickStats(data);
+                })
+                .catch(error => console.error('Error fetching status:', error));
+        }
+
+        function updateWebsitesStatus(websites) {
+            const container = document.getElementById('websitesStatus');
+            if (!container) return; // Exit if element doesn't exist (not in current tab)
+            
+            // Updating websites status
+            
+            // Check if SSL data has been loaded or if SSL elements exist with data
+            const existingSslElements = document.querySelectorAll('[id^="ssl-info-"]');
+            const hasSslData = Array.from(existingSslElements).some(el => {
+                const content = el.innerHTML;
+                return !content.includes('Loading...') && !content.includes('Timeout loading data');
+            });
+            
+            if (sslDataLoaded || hasSslData) {
+                // Only update non-SSL parts of existing cards
+                updateExistingCards(websites);
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            if (websites.length === 0) {
+                container.innerHTML = '<p class="text-center">No websites configured</p>';
+                return;
+            }
+                
+            websites.forEach(site => {
+                const statusClass = getStatusClass(site.status);
+                const faviconUrl = `https://www.google.com/s2/favicons?domain=${new URL(site.url).hostname}&sz=32`;
+                
+                const card = document.createElement('div');
+                card.className = 'col-md-4';
+                card.innerHTML = `
+                    <div class="card website-card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <img src="${faviconUrl}" class="favicon" alt="Favicon" onerror="this.style.display='none'">
+                                ${site.url}
+                            </h5>
+                            <p class="card-text ${statusClass}">
+                                <strong>Status:</strong> ${site.status}
+                            </p>
+                            <p class="card-text">
+                                <strong>Response Time:</strong> ${site.response_time}ms
+                            </p>
+                            <p class="card-text">
+                                <strong>Last Check:</strong> ${site.last_check}
+                            </p>
+                            <p class="card-text">
+                                <strong>SSL Info:</strong> <span id="ssl-info-${site.url.replace(/[^a-zA-Z0-9]/g, '-')}" class="ssl-loading">Loading...</span>
+                            </p>
+                            <p class="card-text">
+                                <small class="text-muted">${site.details}</small>
+                            </p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                
+            });
+        }
+
+        // Update existing cards without destroying SSL data
+        function updateExistingCards(websites) {
+            websites.forEach(site => {
+                const statusClass = getStatusClass(site.status);
+                const faviconUrl = `https://www.google.com/s2/favicons?domain=${new URL(site.url).hostname}&sz=32`;
+                
+                // Find existing card by URL
+                const existingCards = document.querySelectorAll('.website-card');
+                let existingCard = null;
+                for (const card of existingCards) {
+                    const cardTitle = card.querySelector('.card-title');
+                    if (cardTitle && cardTitle.textContent.includes(site.url)) {
+                        existingCard = card;
+                        break;
+                    }
+                }
+                
+                if (existingCard) {
+                    // Update status
+                    const statusElement = existingCard.querySelector('.card-text');
+                    if (statusElement) {
+                        statusElement.className = `card-text ${statusClass}`;
+                        statusElement.innerHTML = `<strong>Status:</strong> ${site.status}`;
+                    }
+                    
+                    // Update response time
+                    const responseTimeElements = existingCard.querySelectorAll('.card-text');
+                    if (responseTimeElements.length > 1) {
+                        responseTimeElements[1].innerHTML = `<strong>Response Time:</strong> ${site.response_time}ms`;
+                    }
+                    
+                    // Update last check
+                    if (responseTimeElements.length > 2) {
+                        responseTimeElements[2].innerHTML = `<strong>Last Check:</strong> ${site.last_check}`;
+                    }
+                    
+                    // Update details
+                    const detailsElements = existingCard.querySelectorAll('.text-muted');
+                    if (detailsElements.length > 0) {
+                        detailsElements[0].textContent = site.details;
+                    }
+                }
+            });
+        }
+
+        // SSL WebSocket handlers
+        function updateSSLStatus(website, sslInfo, sslStatus) {
+            const elementId = `ssl-info-${website.replace(/[^a-zA-Z0-9]/g, '-')}`;
+            const sslElement = document.getElementById(elementId);
+            if (!sslElement) {
+                return false; // Return false if element not found
+            }
+            
+            if (!website.startsWith('https://')) {
+                sslElement.innerHTML = '<span class="ssl-na">Not HTTPS</span>';
+                return true;
+            }
+            
+            if (sslInfo && sslInfo.error) {
+                sslElement.innerHTML = `<span class="ssl-na">${sslInfo.error}</span>`;
+            } else if (sslInfo) {
+                let sslClass = 'ssl-valid';
+                let statusText = 'Valid';
+                
+                if (sslInfo.days_remaining <= 7) {
+                    sslClass = 'ssl-warning';
+                    statusText = 'Warning';
+                }
+                if (sslInfo.days_remaining <= 2) {
+                    sslClass = 'ssl-danger';
+                    statusText = 'Danger';
+                }
+                
+                const expireDate = new Date(sslInfo.valid_to).toLocaleDateString();
+                const sslHTML = `
+                    <span class="${sslClass}">
+                        ${statusText} until ${expireDate} 
+                        (${sslInfo.days_remaining} days)
+                    </span>
+                    <br><small>Issuer: ${sslInfo.issuer}</small>
+                `;
+                sslElement.innerHTML = sslHTML;
+                sslDataLoaded = true; // Mark SSL data as loaded
+            } else {
+                sslElement.innerHTML = '<span class="ssl-na">No data available</span>';
+            }
+            
+            return true; // Return true if update was successful
+        }
+
+        // HTTP fallback for SSL data
+        function loadSSLDataViaHTTP() {
+            const sslElements = document.querySelectorAll('[id^="ssl-info-"]');
+            sslElements.forEach(element => {
+                if (element.innerHTML.includes('Loading...') || element.innerHTML.includes('Timeout loading data')) {
+                    // Extract website URL from element ID
+                    const id = element.id.replace('ssl-info-', '');
+                    const website = id.replace(/-/g, '/').replace(/\/\//g, '://');
+                    
+                    if (website.startsWith('https://')) {
+                        // Try to load SSL data via HTTP API
+                        fetch(`/api/ssl-info/${encodeURIComponent(website)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && !data.error) {
+                                    updateSSLStatus(website, data, 'Valid');
+                                } else {
+                                    element.innerHTML = '<span class="ssl-na">No data available</span>';
+                                }
+                            })
+                            .catch(error => {
+                                console.error(`Error loading SSL info for ${website}:`, error);
+                                element.innerHTML = '<span class="ssl-na">Error loading data</span>';
+                            });
+                    } else {
+                        element.innerHTML = '<span class="ssl-na">Not HTTPS</span>';
+                    }
+                }
+            });
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'Online': return 'status-online';
+                case 'Content Error': return 'status-content-error';
+                case 'DNS Error': return 'status-dns-error';
+                case 'Timeout Error': return 'status-timeout-error';
+                case 'SSL Error': return 'status-ssl-error';
+                case 'Connection Error': return 'status-connection-error';
+                case 'Status Error': return 'status-status-error';
+                case 'Performance Issue': return 'status-performance-issue';
+                case 'SSL Expiration': return 'status-ssl-expiration';
+                default: return 'status-unknown';
+            }
+        }
+
+        function updateQuickStats(websites) {
+            const statsContainer = document.getElementById('statsContent');
+            if (!statsContainer) return; // Exit if element doesn't exist (not in current tab)
+            
+            const onlineCount = websites.filter(site => site.status === 'Online').length;
+            const offlineCount = websites.filter(site => site.status !== 'Online').length;
+            const totalCount = websites.length;
+            
+            statsContainer.innerHTML = `
+                <div class="quick-stats-item">
+                    <strong>Total Websites:</strong> ${totalCount}
+                </div>
+                <div class="quick-stats-item">
+                    <strong>Online:</strong> <span class="status-online">${onlineCount}</span>
+                </div>
+                <div class="quick-stats-item">
+                    <strong>Offline:</strong> <span class="status-offline">${offlineCount}</span>
+                </div>
+                <div class="quick-stats-item">
+                    <strong>Uptime:</strong> ${totalCount > 0 ? Math.round((onlineCount / totalCount) * 100) : 0}%
+                </div>
+            `;
+        }
+
+        function loadTimezones(callback) {
+            fetch('/api/timezones')
+                .then(response => response.json())
+                .then(data => {
+                    const timezoneSelect = document.getElementById('timezone');
+                    timezoneSelect.innerHTML = '';
+                    
+                    data.timezones.forEach(timezone => {
+                        const option = document.createElement('option');
+                        option.value = timezone;
+                        option.textContent = timezone;
+                        timezoneSelect.appendChild(option);
+                    });
+                    
+                    // Call callback after timezones are loaded
+                    if (callback) {
+                        callback();
+                    }
+                })
+                .catch(error => console.error('Error loading timezones:', error));
+        }
+
+        function applyTheme(theme) {
+            const body = document.body;
+            console.log('Applying theme:', theme);
+            if (theme === 'dark') {
+                body.classList.add('dark-theme');
+                console.log('Dark theme class added');
+            } else {
+                body.classList.remove('dark-theme');
+                console.log('Light theme - dark class removed');
+            }
+            console.log('Body classes:', body.className);
+        }
+
+        // Authentication functions
+        function checkAuthStatus() {
+            fetch('/api/auth-status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.authenticated) {
+                        showAuthenticatedUI(data.username);
+                    } else {
+                        showLoginModal();
+                    }
+                })
+                .catch(error => {
+                    console.error('Auth check error:', error);
+                    showLoginModal();
+                });
+        }
+
+        function showAuthenticatedUI(username) {
+            document.getElementById('usernameDisplay').textContent = username;
+            document.getElementById('userInfo').style.display = 'block';
+            // Hide login modal if it's open
+            const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+            if (loginModal) {
+                loginModal.hide();
+            }
+            
+            // Load all data after successful authentication
+            loadSettings();
+            loadWebhooks();
+            checkMonitoringStatus();
+            loadWebsites();
+        }
+
+        function showLoginModal() {
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+        }
+
+        function performLogin() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                alert('Please enter both username and password');
+                return;
+            }
+            
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAuthenticatedUI(username);
+                    // Clear form
+                    document.getElementById('loginUsername').value = '';
+                    document.getElementById('loginPassword').value = '';
+                } else {
+                    alert('Login failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                alert('Login failed: ' + error.message);
+            });
+        }
+
+        function performLogout() {
+            fetch('/api/logout', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('userInfo').style.display = 'none';
+                    showLoginModal();
+                } else {
+                    alert('Logout failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Logout error:', error);
+                alert('Logout failed: ' + error.message);
+            });
+        }
+
+        function showChangePasswordModal() {
+            const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+            modal.show();
+        }
+
+        function performChangePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('All fields are required');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                alert('New passwords do not match');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                alert('New password must be at least 8 characters long');
+                return;
+            }
+
+            fetch('/api/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    new_password: newPassword,
+                    confirm_password: confirmPassword
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Password changed successfully!');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+                    modal.hide();
+                    document.getElementById('changePasswordForm').reset();
+                } else {
+                    alert('Password change failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Password change error:', error);
+                alert('Password change failed');
+            });
+        }
+
+        function loadSettings() {
+            fetch('/api/settings')
+                .then(response => response.json())
+                .then(settings => {
+                    // Populate settings form
+                    document.getElementById('checkInterval').value = settings.check_interval;
+                    document.getElementById('timeout').value = settings.timeout;
+                    document.getElementById('expectedStatus').value = settings.expected_status;
+                    document.getElementById('performanceThreshold').value = settings.performance_threshold;
+                    document.getElementById('consecutiveChecks').value = settings.consecutive_checks;
+                    document.getElementById('sslCheckInterval').value = settings.ssl_check_interval || 3600;
+                    document.getElementById('smtpServer').value = settings.smtp_server;
+                    document.getElementById('smtpPort').value = settings.smtp_port;
+                    document.getElementById('smtpSecurity').value = settings.smtp_security;
+                    document.getElementById('smtpUser').value = settings.smtp_user;
+                    document.getElementById('smtpPass').value = settings.smtp_pass;
+                    document.getElementById('recipientEmail').value = settings.recipient_email;
+                    document.getElementById('fromName').value = settings.from_name;
+                    document.getElementById('subjectPrefix').value = settings.subject_prefix;
+                    document.getElementById('notificationMethod').value = settings.notification_method;
+                    document.getElementById('timezone').value = settings.timezone;
+                    document.getElementById('timeFormat').value = settings.time_format;
+                    document.getElementById('theme').value = settings.theme || 'light';
+                    
+                    // Load email events
+                    if (settings.email_events) {
+                        // Parse email_events if it's a string
+                        let emailEvents = settings.email_events;
+                        if (typeof emailEvents === 'string') {
+                            try {
+                                emailEvents = JSON.parse(emailEvents);
+                            } catch (e) {
+                                // If JSON parsing fails, treat as comma-separated string
+                                emailEvents = emailEvents.split(',').map(event => event.trim());
+                            }
+                        }
+                        
+                        document.getElementById('emailOnline').checked = emailEvents.includes('online');
+                        document.getElementById('emailOffline').checked = emailEvents.includes('offline');
+                        document.getElementById('emailContentError').checked = emailEvents.includes('content_error');
+                        document.getElementById('emailPerformance').checked = emailEvents.includes('performance');
+                        document.getElementById('emailSSLExpire').checked = emailEvents.includes('ssl_expire');
+                    }
+                    
+                    // Apply theme
+                    console.log('Loading theme from settings:', settings.theme || 'light');
+                    applyTheme(settings.theme || 'light');
+                    
+                    // Load websites
+                    loadWebsites();
+                })
+                .catch(error => console.error('Error loading settings:', error));
+        }
+
+        function loadWebsites() {
+            fetch('/api/websites')
+                .then(response => response.json())
+                .then(data => {
+                    const textarea = document.getElementById('websitesList');
+                    textarea.value = data.websites.join('\n');
+                    
+                    // Update website dropdowns
+                    updateWebsiteDropdowns(data.websites);
+                })
+                .catch(error => console.error('Error loading websites:', error));
+        }
+
+        function updateWebsiteDropdowns(websites) {
+            const historyDropdown = document.getElementById('historyWebsiteFilter');
+            const performanceDropdown = document.getElementById('performanceWebsite');
+            
+            // Clear existing options except the first one
+            while (historyDropdown.options.length > 1) historyDropdown.remove(1);
+            while (performanceDropdown.options.length > 1) performanceDropdown.remove(1);
+            
+            // Add websites to dropdowns
+            websites.forEach(website => {
+                const url = website.split('|')[0]; // Get just the URL part
+                const option = document.createElement('option');
+                option.value = url;
+                option.textContent = url;
+                
+                historyDropdown.appendChild(option.cloneNode(true));
+                performanceDropdown.appendChild(option.cloneNode(true));
+            });
+            
+            // Reset SSL tracking variables when websites change
+            sslDataReceived = false;
+            sslTimeoutSet = false;
+            
+            // Load history if History tab is active
+            const historyTab = document.getElementById('history-tab');
+            if (historyTab && historyTab.classList.contains('active')) {
+                console.log('DEBUG: History tab is active after website update, loading history...');
+                loadHistoryStatuses();
+                loadHistory();
+            }
+        }
+
+        function saveSettings(event) {
+            event.preventDefault();
+            
+            const settings = {
+                check_interval: parseInt(document.getElementById('checkInterval').value),
+                timeout: parseInt(document.getElementById('timeout').value),
+                expected_status: parseInt(document.getElementById('expectedStatus').value),
+                performance_threshold: parseInt(document.getElementById('performanceThreshold').value),
+                consecutive_checks: parseInt(document.getElementById('consecutiveChecks').value),
+                ssl_check_interval: parseInt(document.getElementById('sslCheckInterval').value),
+                smtp_server: document.getElementById('smtpServer').value,
+                smtp_port: parseInt(document.getElementById('smtpPort').value),
+                smtp_security: document.getElementById('smtpSecurity').value,
+                smtp_user: document.getElementById('smtpUser').value,
+                smtp_pass: document.getElementById('smtpPass').value,
+                recipient_email: document.getElementById('recipientEmail').value,
+                from_name: document.getElementById('fromName').value,
+                subject_prefix: document.getElementById('subjectPrefix').value,
+                notification_method: document.getElementById('notificationMethod').value,
+                timezone: document.getElementById('timezone').value,
+                time_format: document.getElementById('timeFormat').value,
+                theme: document.getElementById('theme').value,
+                email_events: []
+            };
+            
+            // Collect email events
+            if (document.getElementById('emailOnline').checked) {
+                settings.email_events.push('online');
+            }
+            if (document.getElementById('emailOffline').checked) {
+                settings.email_events.push('offline');
+            }
+            if (document.getElementById('emailContentError').checked) {
+                settings.email_events.push('content_error');
+            }
+            if (document.getElementById('emailPerformance').checked) {
+                settings.email_events.push('performance');
+            }
+            if (document.getElementById('emailSSLExpire').checked) {
+                settings.email_events.push('ssl_expire');
+            }
+            
+            // Convert array to JSON string for storage
+            settings.email_events = JSON.stringify(settings.email_events);
+            
+            // Debug: Log what we're sending
+            console.log('DEBUG: Sending email_events:', settings.email_events);
+            console.log('DEBUG: email_events type:', typeof settings.email_events);
+            
+            const websites = document.getElementById('websitesList').value.split('\n')
+                .filter(line => line.trim())
+                .map(line => line.trim());
+            
+            // First save websites
+            fetch('/api/websites', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ websites: websites })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Then save settings
+                    return fetch('/api/settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(settings)
+                    });
+                } else {
+                    throw new Error('Failed to save websites');
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Settings saved successfully!');
+                    loadSettings(); // Reload to get updated settings
+                } else {
+                    alert('Error saving settings: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving settings:', error);
+                alert('Error saving settings: ' + error.message);
+            });
+        }
+
+        function loadHistoryStatuses() {
+            fetch('/api/history-statuses')
+                .then(response => response.json())
+                .then(data => {
+                    const statusDropdown = document.getElementById('historyStatusFilter');
+                    
+                    // Clear existing options except the first one
+                    while (statusDropdown.options.length > 1) {
+                        statusDropdown.remove(1);
+                    }
+                    
+                    // Add all available statuses
+                    data.statuses.forEach(status => {
+                        const option = document.createElement('option');
+                        option.value = status;
+                        option.textContent = status;
+                        statusDropdown.appendChild(option);
+                    });
+                    
+                    console.log('DEBUG: Loaded history statuses:', data.statuses);
+                })
+                .catch(error => console.error('Error loading history statuses:', error));
+        }
+
+        function setDefaultDateRange() {
+            // Set default date range to last 7 days
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 7);
+            
+            // Format dates as YYYY-MM-DD for HTML date inputs
+            const formatDate = (date) => {
+                return date.toISOString().split('T')[0];
+            };
+            
+            // Only set if fields are empty
+            const dateFromField = document.getElementById('historyDateFrom');
+            const dateToField = document.getElementById('historyDateTo');
+            
+            if (!dateFromField.value) {
+                dateFromField.value = formatDate(sevenDaysAgo);
+            }
+            if (!dateToField.value) {
+                dateToField.value = formatDate(today);
+            }
+        }
+
+        function loadHistory() {
+            console.log('DEBUG: loadHistory called');
+            
+            // Check if History tab is active
+            const historyTab = document.getElementById('history-tab');
+            if (!historyTab || !historyTab.classList.contains('active')) {
+                console.log('DEBUG: History tab is not active, skipping loadHistory');
+                return;
+            }
+            
+            console.log('DEBUG: History tab is active, loading data...');
+            
+            const offset = (currentHistoryPage - 1) * currentHistoryLimit;
+            const url = `/api/history?limit=${currentHistoryLimit}&offset=${offset}&website=${currentHistoryFilters.website}&status=${currentHistoryFilters.status}&dateFrom=${currentHistoryFilters.dateFrom}&dateTo=${currentHistoryFilters.dateTo}`;
+            
+            console.log(`DEBUG: Loading history from URL: ${url}`);
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('DEBUG: History data received:', data);
+                    updateHistoryTable(data.history);
+                    updateHistoryStats(data);
+                    updatePagination(data);
+                })
+                .catch(error => console.error('Error loading history:', error));
+        }
+
+        function updateHistoryTable(history) {
+            const tableBody = document.getElementById('historyTable');
+            if (!tableBody) return; // Exit if element doesn't exist (not in current tab)
+            
+            if (history.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No history records found</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            history.forEach(record => {
+                const statusClass = getStatusClass(record.status);
+                html += `
+                    <tr>
+                        <td>${record.timestamp}</td>
+                        <td>${record.website}</td>
+                        <td class="${statusClass}">${record.status}</td>
+                        <td>${record.response_time}ms</td>
+                        <td>${record.details}</td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+        }
+
+        function updateHistoryStats(data) {
+            const statsElement = document.getElementById('historyStats');
+            const exportButton = document.getElementById('exportHistory');
+            if (!statsElement || !exportButton) return; // Exit if elements don't exist (not in current tab)
+            
+            // Handle case when there are no records
+            if (data.total_count === 0) {
+                statsElement.textContent = `Showing 0 of 0 records`;
+            } else {
+                const startRecord = (currentHistoryPage - 1) * currentHistoryLimit + 1;
+                const endRecord = Math.min(currentHistoryPage * currentHistoryLimit, data.total_count);
+                statsElement.textContent = `Showing ${startRecord}-${endRecord} of ${data.total_count} records`;
+            }
+            
+            // Hide export button if no records or no filters applied
+            const hasRecords = data.total_count > 0;
+            const hasFilters = currentHistoryFilters.website || 
+                              currentHistoryFilters.status || 
+                              currentHistoryFilters.dateFrom || 
+                              currentHistoryFilters.dateTo;
+            
+            if (hasRecords && hasFilters) {
+                exportButton.style.display = 'inline-block';
+            } else {
+                exportButton.style.display = 'none';
+            }
+        }
+
+        function applyHistoryFilter() {
+            currentHistoryFilters = {
+                website: document.getElementById('historyWebsiteFilter').value,
+                status: document.getElementById('historyStatusFilter').value,
+                dateFrom: document.getElementById('historyDateFrom').value,
+                dateTo: document.getElementById('historyDateTo').value
+            };
+            currentHistoryPage = 1; // Reset to first page when applying filters
+            loadHistory();
+        }
+
+        function updatePagination(data) {
+            const paginationContainer = document.getElementById('historyPaginationContainer');
+            const pagination = document.getElementById('historyPagination');
+            
+            if (!paginationContainer || !pagination) return;
+            
+            // Calculate total pages
+            totalHistoryPages = Math.ceil(data.total_count / currentHistoryLimit);
+            
+            // Show pagination only if there's more than 1 page
+            if (totalHistoryPages <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+            
+            paginationContainer.style.display = 'block';
+            
+            // Clear existing pagination
+            pagination.innerHTML = '';
+            
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentHistoryPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#" data-page="${currentHistoryPage - 1}">Previous</a>`;
+            pagination.appendChild(prevLi);
+            
+            // Page numbers
+            const startPage = Math.max(1, currentHistoryPage - 2);
+            const endPage = Math.min(totalHistoryPages, currentHistoryPage + 2);
+            
+            // First page if not in range
+            if (startPage > 1) {
+                const firstLi = document.createElement('li');
+                firstLi.className = 'page-item';
+                firstLi.innerHTML = `<a class="page-link" href="#" data-page="1">1</a>`;
+                pagination.appendChild(firstLi);
+                
+                if (startPage > 2) {
+                    const ellipsisLi = document.createElement('li');
+                    ellipsisLi.className = 'page-item disabled';
+                    ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+                    pagination.appendChild(ellipsisLi);
+                }
+            }
+            
+            // Page numbers in range
+            for (let i = startPage; i <= endPage; i++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = `page-item ${i === currentHistoryPage ? 'active' : ''}`;
+                pageLi.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
+                pagination.appendChild(pageLi);
+            }
+            
+            // Last page if not in range
+            if (endPage < totalHistoryPages) {
+                if (endPage < totalHistoryPages - 1) {
+                    const ellipsisLi = document.createElement('li');
+                    ellipsisLi.className = 'page-item disabled';
+                    ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+                    pagination.appendChild(ellipsisLi);
+                }
+                
+                const lastLi = document.createElement('li');
+                lastLi.className = 'page-item';
+                lastLi.innerHTML = `<a class="page-link" href="#" data-page="${totalHistoryPages}">${totalHistoryPages}</a>`;
+                pagination.appendChild(lastLi);
+            }
+            
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentHistoryPage === totalHistoryPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#" data-page="${currentHistoryPage + 1}">Next</a>`;
+            pagination.appendChild(nextLi);
+            
+            // Add click event listeners
+            pagination.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (e.target.classList.contains('page-link') && !e.target.parentElement.classList.contains('disabled')) {
+                    const page = parseInt(e.target.getAttribute('data-page'));
+                    if (page && page !== currentHistoryPage && page >= 1 && page <= totalHistoryPages) {
+                        currentHistoryPage = page;
+            loadHistory();
+                    }
+                }
+            });
+        }
+
+        function exportHistory() {
+            // Get current filter values
+            const website = document.getElementById('historyWebsiteFilter').value;
+            const status = document.getElementById('historyStatusFilter').value;
+            const dateFrom = document.getElementById('historyDateFrom').value;
+            const dateTo = document.getElementById('historyDateTo').value;
+            
+            // Build export URL with current filters
+            const exportUrl = `/api/history/export?website=${encodeURIComponent(website)}&status=${encodeURIComponent(status)}&dateFrom=${encodeURIComponent(dateFrom)}&dateTo=${encodeURIComponent(dateTo)}`;
+            
+            // Create temporary link and trigger download
+            const link = document.createElement('a');
+            link.href = exportUrl;
+            link.download = `history_export_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function loadPerformanceData() {
+            const website = document.getElementById('performanceWebsite').value;
+            const hours = document.getElementById('performanceRange').value;
+            
+            if (!website) {
+                alert('Please select a website');
+                return;
+            }
+            
+            fetch(`/api/performance/${encodeURIComponent(website)}?hours=${hours}`)
+                .then(response => response.json())
+                .then(data => {
+                    updatePerformanceStats(data);
+                    loadPerformanceChart(website, hours);
+                })
+                .catch(error => console.error('Error loading performance data:', error));
+        }
+
+        function updatePerformanceStats(data) {
+            const statsContainer = document.getElementById('performanceStats');
+            statsContainer.style.display = 'block';
+            
+            if (data.response_times.length === 0) {
+                document.getElementById('avgResponse').textContent = '0 ms';
+                document.getElementById('maxResponse').textContent = '0 ms';
+                document.getElementById('minResponse').textContent = '0 ms';
+                document.getElementById('uptimePercentage').textContent = '0%';
+                document.getElementById('totalChecks').textContent = '0';
+                document.getElementById('errorRate').textContent = '0%';
+                return;
+            }
+            
+            const onlineCount = data.statuses.filter(status => status === 'Online').length;
+            const totalCount = data.statuses.length;
+            const uptimePercentage = totalCount > 0 ? Math.round((onlineCount / totalCount) * 100) : 0;
+            const errorRate = totalCount > 0 ? Math.round(((totalCount - onlineCount) / totalCount) * 100) : 0;
+            
+            const avgResponse = Math.round(data.response_times.reduce((a, b) => a + b, 0) / data.response_times.length);
+            const maxResponse = Math.max(...data.response_times);
+            const minResponse = Math.min(...data.response_times);
+            
+            document.getElementById('avgResponse').textContent = `${avgResponse} ms`;
+            document.getElementById('maxResponse').textContent = `${maxResponse} ms`;
+            document.getElementById('minResponse').textContent = `${minResponse} ms`;
+            document.getElementById('uptimePercentage').textContent = `${uptimePercentage}%`;
+            document.getElementById('totalChecks').textContent = `${totalCount}`;
+            document.getElementById('errorRate').textContent = `${errorRate}%`;
+        }
+
+        let performanceChart = null;
+
+        function loadPerformanceChart(website, hours) {
+            const canvas = document.getElementById('performanceChart');
+            const fallback = document.getElementById('performanceChartFallback');
+            const fallbackImg = document.getElementById('performanceChartImg');
+            
+            // Hide fallback, show canvas
+            canvas.style.display = 'block';
+            fallback.style.display = 'none';
+            
+            // Destroy existing chart if it exists
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+            
+            try {
+                const ctx = canvas.getContext('2d');
+                
+                // Get theme colors
+                const isDarkTheme = document.body.classList.contains('dark-theme');
+                const textColor = isDarkTheme ? '#f0f0f0' : '#495057';
+                const gridColor = isDarkTheme ? '#404040' : '#dee2e6';
+                
+                fetch(`/api/performance/${encodeURIComponent(website)}?hours=${hours}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.timestamps || data.timestamps.length === 0) {
+                            ctx.fillStyle = textColor;
+                            ctx.font = '16px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('No performance data available', canvas.width / 2, canvas.height / 2);
+                            return;
+                        }
+                        
+                        // Prepare data
+                        const labels = data.timestamps;
+                        const responseTimes = data.response_times;
+                        const statuses = data.statuses;
+                        
+                        // Create color array based on status
+                        const colors = statuses.map(status => {
+                            switch(status) {
+                                case 'Online': return '#28a745';
+                                case 'Performance Issue': return '#ffc107';
+                                case 'Content Error': return '#ff8c00';
+                                case 'DNS Error': return '#dc3545';
+                                case 'Timeout Error': return '#dc3545';
+                                case 'SSL Error': return '#dc3545';
+                                case 'Connection Error': return '#dc3545';
+                                case 'Status Error': return '#dc3545';
+                                default: return '#6c757d';
+                            }
+                        });
+                        
+                        // Optimize chart for large datasets
+                        const isLargeDataset = labels.length > 1000;
+                        const pointRadius = isLargeDataset ? 2 : 4;
+                        const pointHoverRadius = isLargeDataset ? 4 : 6;
+                        const showPoints = !isLargeDataset || labels.length < 2000;
+                        
+                        // Create chart
+                        performanceChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Response Time (ms)',
+                                    data: responseTimes,
+                                    borderColor: '#007bff',
+                                    backgroundColor: '#007bff20',
+                                    borderWidth: 2,
+                                    pointRadius: showPoints ? pointRadius : 0,
+                                    pointHoverRadius: pointHoverRadius,
+                                    pointBackgroundColor: colors,
+                                    pointBorderColor: colors,
+                                    fill: true,
+                                    tension: 0.1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: `Performance Data for ${website}`,
+                                        color: textColor,
+                                        font: {
+                                            size: 16,
+                                            weight: 'bold'
+                                        }
+                                    },
+                                    legend: {
+                                        display: true,
+                                        labels: {
+                                            color: textColor
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        display: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Time',
+                                            color: textColor
+                                        },
+                                        ticks: {
+                                            color: textColor,
+                                            maxTicksLimit: hours > 168 ? 15 : 10  // More ticks for longer periods
+                                        },
+                                        grid: {
+                                            color: gridColor
+                                        }
+                                    },
+                                    y: {
+                                        display: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Response Time (ms)',
+                                            color: textColor
+                                        },
+                                        ticks: {
+                                            color: textColor
+                                        },
+                                        grid: {
+                                            color: gridColor
+                                        },
+                                        beginAtZero: true
+                                    }
+                                },
+                                interaction: {
+                                    intersect: false,
+                                    mode: 'index'
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading performance chart:', error);
+                        // Fallback to matplotlib chart
+                        showFallbackChart(website, hours);
+                    });
+            } catch (error) {
+                console.error('Chart.js error:', error);
+                // Fallback to matplotlib chart
+                showFallbackChart(website, hours);
+            }
+        }
+        
+        function showFallbackChart(website, hours) {
+            const canvas = document.getElementById('performanceChart');
+            const fallback = document.getElementById('performanceChartFallback');
+            const fallbackImg = document.getElementById('performanceChartImg');
+            
+            // Hide canvas, show fallback
+            canvas.style.display = 'none';
+            fallback.style.display = 'block';
+            
+            // Load matplotlib chart
+            fallbackImg.src = `/api/performance-chart/${encodeURIComponent(website)}?hours=${hours}&t=${new Date().getTime()}`;
+            fallbackImg.onerror = function() {
+                fallback.innerHTML = '<p class="text-center text-muted">Error loading performance chart</p>';
+            };
+        }
+
+        function loadWebhooks() {
+            fetch('/api/webhooks')
+                .then(response => response.json())
+                .then(data => {
+                    updateWebhooksTable(data.webhooks);
+                })
+                .catch(error => console.error('Error loading webhooks:', error));
+        }
+
+        function updateWebhooksTable(webhooks) {
+            const tableBody = document.getElementById('webhooksTable');
+            
+            if (webhooks.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No webhooks configured</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            webhooks.forEach(webhook => {
+                html += `
+                    <tr>
+                        <td>${webhook.name}</td>
+                        <td>${webhook.url}</td>
+                        <td>${webhook.events.map(event => {
+                            switch(event) {
+                                case 'online': return 'Back Online';
+                                case 'offline': return 'Offline';
+                                case 'content_error': return 'Content Error';
+                                case 'performance': return 'Performance';
+                                case 'ssl_expire': return 'SSL Expiration';
+                                default: return event;
+                            }
+                        }).join(', ')}</td>
+                        <td>${webhook.active ? 'Yes' : 'No'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success test-webhook me-1" data-id="${webhook.id}" data-url="${webhook.url}">Test</button>
+                            <button class="btn btn-sm btn-primary edit-webhook me-1" data-id="${webhook.id}">Edit</button>
+                            <button class="btn btn-sm btn-danger delete-webhook" data-id="${webhook.id}">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.test-webhook').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    testWebhook(this.dataset.id, this.dataset.url);
+                });
+            });
+            
+            document.querySelectorAll('.edit-webhook').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    editWebhook(this.dataset.id);
+                });
+            });
+            
+            document.querySelectorAll('.delete-webhook').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deleteWebhook(this.dataset.id);
+                });
+            });
+        }
+
+        function testWebhook(webhookId, webhookUrl) {
+            const modal = new bootstrap.Modal(document.getElementById('testWebhookModal'));
+            document.getElementById('testWebhookId').value = webhookId;
+            document.getElementById('testWebhookUrl').value = webhookUrl;
+            document.getElementById('testStatus').value = 'Back Online';
+            document.getElementById('testWebsite').value = 'https://example.com';
+            document.getElementById('testResponseTime').value = '150';
+            document.getElementById('testDetails').value = 'Test notification from webhook tester';
+            modal.show();
+        }
+
+        function sendTestWebhook() {
+            const webhookId = document.getElementById('testWebhookId').value;
+            const status = document.getElementById('testStatus').value;
+            const website = document.getElementById('testWebsite').value;
+            const responseTime = document.getElementById('testResponseTime').value;
+            const details = document.getElementById('testDetails').value;
+            
+            const testData = {
+                webhook_id: webhookId,
+                status: status,
+                website: website,
+                response_time: parseInt(responseTime),
+                details: details
+            };
+            
+            fetch('/api/webhook/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(testData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Test webhook sent successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('testWebhookModal')).hide();
+                } else {
+                    alert('Error sending test webhook: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error sending test webhook: ' + error.message);
+            });
+        }
+
+        function showAddWebhookForm() {
+            const modal = new bootstrap.Modal(document.getElementById('webhookModal'));
+            document.getElementById('modalWebhookId').value = '';
+            document.getElementById('modalWebhookName').value = '';
+            document.getElementById('modalWebhookUrl').value = '';
+            document.getElementById('modalWebhookSecret').value = '';
+            document.getElementById('modalWebhookOnline').checked = true;
+            document.getElementById('modalWebhookOffline').checked = true;
+            document.getElementById('modalWebhookTextMissing').checked = true;
+            document.getElementById('modalWebhookPerformance').checked = true;
+            document.getElementById('modalWebhookSSLExpire').checked = true;
+            document.getElementById('modalWebhookActive').checked = true;
+            modal.show();
+        }
+
+        function editWebhook(webhookId) {
+            fetch('/api/webhooks')
+                .then(response => response.json())
+                .then(data => {
+                    const webhook = data.webhooks.find(w => w.id == webhookId);
+                    if (webhook) {
+                        const modal = new bootstrap.Modal(document.getElementById('webhookModal'));
+                        document.getElementById('modalWebhookId').value = webhook.id;
+                        document.getElementById('modalWebhookName').value = webhook.name;
+                        document.getElementById('modalWebhookUrl').value = webhook.url;
+                        document.getElementById('modalWebhookSecret').value = webhook.secret || '';
+                        // Set individual event checkboxes based on webhook events
+                        document.getElementById('modalWebhookOnline').checked = webhook.events.includes('online');
+                        document.getElementById('modalWebhookOffline').checked = webhook.events.includes('offline');
+                        document.getElementById('modalWebhookTextMissing').checked = webhook.events.includes('content_error');
+                        document.getElementById('modalWebhookPerformance').checked = webhook.events.includes('performance');
+                        document.getElementById('modalWebhookSSLExpire').checked = webhook.events.includes('ssl_expire');
+                        document.getElementById('modalWebhookActive').checked = webhook.active;
+                        modal.show();
+                    }
+                })
+                .catch(error => console.error('Error loading webhook:', error));
+        }
+
+        function saveWebhookFromModal() {
+            const webhookData = {
+                id: document.getElementById('modalWebhookId').value ? parseInt(document.getElementById('modalWebhookId').value) : null,
+                name: document.getElementById('modalWebhookName').value.trim(),
+                url: document.getElementById('modalWebhookUrl').value.trim(),
+                secret: document.getElementById('modalWebhookSecret').value.trim(),
+                events: [],
+                active: document.getElementById('modalWebhookActive').checked
+            };
+            
+            // Validate required fields
+            if (!webhookData.name) {
+                alert('Please enter a webhook name');
+                return;
+            }
+            
+            if (!webhookData.url) {
+                alert('Please enter a webhook URL');
+                return;
+            }
+            
+            // Validate URL format
+            try {
+                new URL(webhookData.url);
+            } catch (e) {
+                alert('Please enter a valid URL');
+                return;
+            }
+            
+            // Add individual events based on checkboxes
+            if (document.getElementById('modalWebhookOnline').checked) {
+                webhookData.events.push('online');
+            }
+            if (document.getElementById('modalWebhookOffline').checked) {
+                webhookData.events.push('offline');
+            }
+            if (document.getElementById('modalWebhookTextMissing').checked) {
+                webhookData.events.push('content_error');
+            }
+            if (document.getElementById('modalWebhookPerformance').checked) {
+                webhookData.events.push('performance');
+            }
+            if (document.getElementById('modalWebhookSSLExpire').checked) {
+                webhookData.events.push('ssl_expire');
+            }
+            
+            if (webhookData.events.length === 0) {
+                alert('Please select at least one event type');
+                return;
+            }
+            
+            fetch('/api/webhooks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(webhookData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Hide modal using Bootstrap 5 API
+                    const modalElement = document.getElementById('webhookModal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    } else {
+                        // Fallback: hide modal manually
+                        modalElement.style.display = 'none';
+                        document.body.classList.remove('modal-open');
+                        const backdrop = document.querySelector('.modal-backdrop');
+                        if (backdrop) {
+                            backdrop.remove();
+                        }
+                    }
+                    loadWebhooks();
+                    alert('Webhook saved successfully!');
+                } else {
+                    alert('Error saving webhook: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving webhook:', error);
+                alert('Error saving webhook: ' + error.message);
+            });
+        }
+
+        function deleteWebhook(webhookId) {
+            if (confirm('Are you sure you want to delete this webhook?')) {
+                fetch(`/api/webhooks/${webhookId}`, { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadWebhooks();
+                            alert('Webhook deleted successfully!');
+                        } else {
+                            alert('Error deleting webhook: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting webhook:', error);
+                        alert('Error deleting webhook: ' + error.message);
+                    });
+            }
+        }
+
+        function testSmtpSettings() {
+            const settings = {
+                smtp_server: document.getElementById('smtpServer').value,
+                smtp_port: parseInt(document.getElementById('smtpPort').value),
+                smtp_security: document.getElementById('smtpSecurity').value,
+                smtp_user: document.getElementById('smtpUser').value,
+                smtp_pass: document.getElementById('smtpPass').value,
+                recipient_email: document.getElementById('recipientEmail').value,
+                from_name: document.getElementById('fromName').value,
+                subject_prefix: document.getElementById('subjectPrefix').value
+            };
+            
+            // Validate required fields
+            if (!settings.smtp_server || !settings.smtp_port || !settings.smtp_user || !settings.smtp_pass) {
+                alert('Please fill in all required SMTP fields (Server, Port, Username, Password)');
+                return;
+            }
+            
+            const testBtn = document.getElementById('testSmtp');
+            const originalText = testBtn.textContent;
+            testBtn.disabled = true;
+            testBtn.textContent = 'Testing...';
+            
+            fetch('/api/settings/test-smtp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('SMTP Test Successful!\n' + data.message);
+                } else {
+                    alert('SMTP Test Failed!\n' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error testing SMTP:', error);
+                alert('Error testing SMTP: ' + error.message);
+            })
+            .finally(() => {
+                testBtn.disabled = false;
+                testBtn.textContent = originalText;
+            });
+        }
+
+        function exportCompleteBackup() {
+            // Fetch all data
+            Promise.all([
+                fetch('/api/settings').then(response => response.json()),
+                fetch('/api/websites').then(response => response.json()),
+                fetch('/api/webhooks').then(response => response.json())
+            ])
+            .then(([settings, websites, webhooks]) => {
+                // Create complete backup
+                const backupData = {
+                    version: '2.0',
+                    timestamp: new Date().toISOString(),
+                    application: 'Ping Daddy',
+                    backup_type: 'complete',
+                    data: {
+                        settings: settings,
+                        websites: websites,
+                        webhooks: webhooks
+                    }
+                };
+                
+                // Create and download file
+                const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ping-daddy-pro-complete-backup-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('Complete backup exported successfully!');
+            })
+            .catch(error => {
+                console.error('Error exporting backup:', error);
+                alert('Error exporting backup: ' + error.message);
+            });
+        }
+
+        function importCompleteBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    // Debug: Log backup data structure
+                    console.log('Backup data structure:', backupData);
+                    console.log('Settings:', backupData.data.settings);
+                    console.log('Websites:', backupData.data.websites);
+                    console.log('Webhooks:', backupData.data.webhooks);
+                    
+                    // Validate backup format
+                    if (!backupData.data || !backupData.data.settings) {
+                        alert('Invalid backup file format!');
+                        return;
+                    }
+                    
+                    if (confirm('Are you sure you want to import this complete backup? This will overwrite ALL your current settings, websites, and webhooks.')) {
+                        if (confirm('This will completely replace your current configuration. Are you absolutely sure?')) {
+                            // Import settings first
+                            // Convert email_events from array to JSON string if needed
+                            const settingsToImport = { ...backupData.data.settings };
+                            if (settingsToImport.email_events && Array.isArray(settingsToImport.email_events)) {
+                                settingsToImport.email_events = JSON.stringify(settingsToImport.email_events);
+                                console.log('Converted email_events from array to JSON string:', settingsToImport.email_events);
+                            }
+                            
+                            fetch('/api/settings', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(settingsToImport)
+                            })
+                            .then(response => response.json())
+                            .then(settingsResult => {
+                                if (!settingsResult.success) {
+                                    throw new Error('Failed to import settings: ' + settingsResult.message);
+                                }
+                                
+                                // Import websites
+                                const websitesData = backupData.data.websites.websites || [];
+                                console.log('Importing websites:', websitesData);
+                                return fetch('/api/websites', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({ websites: websitesData })
+                                });
+                            })
+                            .then(response => response.json())
+                            .then(websitesResult => {
+                                if (!websitesResult.success) {
+                                    throw new Error('Failed to import websites: ' + websitesResult.message);
+                                }
+                                
+                                // Import webhooks
+                                const webhooksData = backupData.data.webhooks.webhooks || [];
+                                console.log('Importing webhooks:', webhooksData);
+                                console.log('Webhooks data type:', typeof webhooksData);
+                                console.log('Webhooks data length:', webhooksData.length);
+                                console.log('First webhook:', webhooksData[0]);
+                                
+                                if (webhooksData.length === 0) {
+                                    console.log('No webhooks to import, skipping...');
+                                    return Promise.resolve({success: true, message: 'No webhooks to import'});
+                                }
+                                
+                                return fetch('/api/webhooks/bulk', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({ webhooks: webhooksData })
+                                });
+                            })
+                            .then(response => {
+                                console.log('Webhooks bulk response:', response);
+                                return response.json();
+                            })
+                            .then(webhooksResult => {
+                                console.log('Webhooks bulk result:', webhooksResult);
+                                if (webhooksResult.success) {
+                                    alert('Complete backup imported successfully!');
+                                    loadSettings(); // Reload settings
+                                    loadWebhooks(); // Reload webhooks
+                                    loadWebsites(); // Reload websites
+                                    
+                                    // Restart monitoring to pick up new websites
+                                    restartMonitoringAfterImport();
+                                } else {
+                                    alert('Error importing webhooks: ' + webhooksResult.message);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error importing backup:', error);
+                                alert('Error importing backup: ' + error.message);
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error parsing backup file:', error);
+                    alert('Error parsing backup file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+
+        function resetSettingsOnly() {
+            if (confirm('Are you sure you want to reset only the settings to default values? Websites and webhooks will be kept.')) {
+                fetch('/api/settings/reset-settings-only', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Settings reset successfully!');
+                        loadSettings(); // Reload settings
+                    } else {
+                        alert('Error resetting settings: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resetting settings:', error);
+                    alert('Error resetting settings: ' + error.message);
+                });
+            }
+        }
+
+        function resetEverything() {
+            if (confirm('Are you sure you want to reset EVERYTHING to default values? This will delete all settings, websites, and webhooks.')) {
+                if (confirm('This action cannot be undone! Are you absolutely sure?')) {
+                    fetch('/api/settings/reset', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Everything reset successfully!');
+                            loadSettings(); // Reload settings
+                            loadWebsites(); // Reload websites
+                            loadWebhooks(); // Reload webhooks
+                        } else {
+                            alert('Error resetting everything: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error resetting everything:', error);
+                        alert('Error resetting everything: ' + error.message);
+                    });
+                }
+            }
+        }
+        
+        function restartMonitoringAfterImport() {
+            // Stop monitoring first
+            fetch('/api/stop', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Wait a moment for monitoring to stop
+                        setTimeout(() => {
+                            // Start monitoring again
+                            fetch('/api/start', { method: 'POST' })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        console.log('Monitoring restarted after backup import');
+                                        // Update UI
+                                        isMonitoring = true;
+                                        updateMonitorStatusUI();
+                                        startStatusUpdates();
+                                    }
+                                })
+                                .catch(error => console.error('Error restarting monitoring:', error));
+                        }, 1000); // Wait 1 second
+                    }
+                })
+                .catch(error => console.error('Error stopping monitoring:', error));
+        }
+    </script>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-light text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">
+                <span class="brand-gradient">Ping Daddy Pro</span> - Professional Website Monitoring Solution
+            </p>
+            <small class="text-muted">© <span id="footer-year">2025</span> Ping Daddy Pro  |  Version <span id="app-version" data-bs-toggle="tooltip" data-bs-placement="top" title="Loading version details...">Loading...</span></small>
+        </div>
+      </footer>
+</body>
+</html>

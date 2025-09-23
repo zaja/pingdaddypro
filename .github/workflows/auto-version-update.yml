@@ -1,0 +1,62 @@
+name: Auto Version Update
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.1)'
+        required: true
+        type: string
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for tags
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Extract version from tag
+      if: github.event_name == 'push'
+      id: extract_version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/v* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Error: Not a version tag"
+          exit 1
+        fi
+    
+    - name: Set version from input
+      if: github.event_name == 'workflow_dispatch'
+      id: set_version
+      run: |
+        echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+    
+    - name: Update version information
+      run: |
+        python update_version.py --version ${{ steps.extract_version.outputs.version || steps.set_version.outputs.version }}
+    
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "Auto-update version to v${{ steps.extract_version.outputs.version || steps.set_version.outputs.version }}" || echo "No changes to commit"
+    
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main

@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pingdaddypro"
+version = "1.0.3"
+description = "Professional Website Monitoring Application"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "svejedobro", email = "svejedobro@example.com"},
+]
+keywords = [
+    "monitoring",
+    "website",
+    "uptime",
+    "ssl",
+    "performance",
+    "docker",
+    "flask",
+    "postgresql"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Monitoring",
+    "Topic :: Internet :: WWW/HTTP :: Site Management",
+]
+
+dependencies = [
+    "Flask==2.3.3",
+    "Flask-SocketIO==5.3.6",
+    "requests==2.31.0",
+    "bcrypt==4.0.1",
+    "pytz==2023.3",
+    "tzlocal==4.3.1",
+    "matplotlib==3.8.2",
+    "Pillow==10.0.0",
+    "dnspython==2.4.2",
+    "numpy>=1.24.0,<2.0.0",
+    "psycopg2-binary==2.9.7",
+    "SQLAlchemy==2.0.23",
+    "python-dateutil==2.8.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/zaja/pingdaddypro"
+Documentation = "https://github.com/zaja/pingdaddypro#readme"
+Repository = "https://github.com/zaja/pingdaddypro.git"
+"Bug Tracker" = "https://github.com/zaja/pingdaddypro/issues"
+
+[project.scripts]
+pingdaddypro = "pingdaddypro:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pingdaddypro*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
