@@ -1,0 +1,102 @@
+# PingDaddyPro .gitignore
+# GitHub: https://github.com/zaja/pingdaddypro
+# Docker Hub: svejedobro/pingdaddypro
+# Version: 1.0.1
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Database files (development only)
+*.db
+*.sqlite
+*.sqlite3
+monitor.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+.dockerignore
+
+# Development specific files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Backup files
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+*.temp
+
+# Data directories (development)
+pingdaddypro-data/
+postgres_data/
+
+# Development scripts (excluded from production repo)
+start-dev.bat
+stop-dev.bat
+logs-dev.bat
+reset-dev-db.bat
+dev.ps1
+test_brute_force.py
+update_version.py
+
+# Migration scripts (excluded from production repo)
+migrate_sqlite_to_postgresql.py
+
+# Backup/old files
+pingdaddypro_fixed.py
+*_backup.py
+*_old.py
+
+# Internal documentation (not for public sharing)
+ANALIZA-STRUKTURE.md
