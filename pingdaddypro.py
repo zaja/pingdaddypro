@@ -715,6 +715,9 @@ class WebsiteMonitor:
                 except Exception as e:
                     print(f"Error checking SSL for {url}: {str(e)}")
             
+            # Reload SSL data into memory after immediate checks
+            self.load_ssl_data_into_memory()
+            
             print("Immediate SSL checks completed")
         except Exception as e:
             print(f"Error in perform_immediate_ssl_checks: {str(e)}")
@@ -741,6 +744,9 @@ class WebsiteMonitor:
             conn.commit()
             conn.close()
             self.load_websites()
+            
+            # Reload SSL data into memory after adding new websites
+            self.load_ssl_data_into_memory()
             
             # Perform immediate SSL check for new HTTPS websites
             self.perform_immediate_ssl_checks()
@@ -1014,6 +1020,9 @@ class WebsiteMonitor:
                 'issuer': ssl_info['issuer'],
                 'last_checked': datetime.now()
             }
+            
+            # Reload SSL data into memory to ensure consistency
+            self.load_ssl_data_into_memory()
             
         except Exception as e:
             print(f"Error storing SSL certificate info: {str(e)}")
@@ -2149,6 +2158,9 @@ def api_reset_settings():
             
             # Clear SSL cache
             monitor.ssl_certificates_cache = {}
+            
+            # Reload SSL data into memory after reset
+            monitor.load_ssl_data_into_memory()
             
             # Clear webhooks
             monitor.webhooks = []
