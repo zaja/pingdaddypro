@@ -269,8 +269,7 @@ def init_db():
                      smtp_server TEXT, smtp_port INTEGER, smtp_security TEXT,
                      smtp_user TEXT, smtp_pass TEXT, recipient_email TEXT,
                      from_name TEXT, subject_prefix TEXT, notification_method TEXT,
-                     timezone TEXT, time_format TEXT, theme TEXT, email_events TEXT,
-)''')
+                     timezone TEXT, time_format TEXT, theme TEXT, email_events TEXT)''')
         
         cursor.execute('''CREATE TABLE IF NOT EXISTS webhooks
                          (id SERIAL PRIMARY KEY, name TEXT, url TEXT, secret TEXT,
