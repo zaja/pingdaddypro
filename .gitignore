@@ -61,6 +61,7 @@ logs/
 
 # Docker
 .dockerignore
+docker-compose-dev.yml
 
 # Development specific files
 .env
