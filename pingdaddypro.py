@@ -262,41 +262,6 @@ def init_db():
         cursor.execute('''CREATE TABLE IF NOT EXISTS websites
                          (id SERIAL PRIMARY KEY, url TEXT, expected_text TEXT)''')
         
-        # Add ssl_check_interval column if it doesn't exist (migration)
-        print("DEBUG: Starting SSL check interval migration...")
-        try:
-            # First check if settings table exists
-            cursor.execute('''SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_name = 'settings'
-            )''')
-            result = cursor.fetchone()
-            print(f"DEBUG: result from EXISTS query: {result}")
-            table_exists = result['exists'] if result else False
-            print(f"DEBUG: settings table exists: {table_exists}")
-            
-            if table_exists:
-                # Check if column already exists
-                cursor.execute('''SELECT column_name FROM information_schema.columns 
-                                 WHERE table_name='settings' AND column_name='ssl_check_interval' ''')
-                column_exists = cursor.fetchone() is not None
-                print(f"DEBUG: ssl_check_interval column exists: {column_exists}")
-                
-                if not column_exists:
-                    print("DEBUG: Adding ssl_check_interval column...")
-                    cursor.execute('ALTER TABLE settings ADD COLUMN ssl_check_interval INTEGER DEFAULT 3600')
-                    conn.commit()
-                    print("Added ssl_check_interval column to settings table")
-                else:
-                    print("ssl_check_interval column already exists")
-            else:
-                print("Settings table doesn't exist yet, will be created with ssl_check_interval column")
-        except Exception as e:
-            print(f"Error checking/adding ssl_check_interval column: {e}")
-            import traceback
-            traceback.print_exc()
-            # Don't rollback here, just continue
-            pass
         
         cursor.execute('''CREATE TABLE IF NOT EXISTS settings
                          (id SERIAL PRIMARY KEY, check_interval INTEGER, timeout INTEGER, 
@@ -305,7 +270,7 @@ def init_db():
                      smtp_user TEXT, smtp_pass TEXT, recipient_email TEXT,
                      from_name TEXT, subject_prefix TEXT, notification_method TEXT,
                      timezone TEXT, time_format TEXT, theme TEXT, email_events TEXT,
-                     ssl_check_interval INTEGER DEFAULT 3600)''')
+)''')
         
         cursor.execute('''CREATE TABLE IF NOT EXISTS webhooks
                          (id SERIAL PRIMARY KEY, name TEXT, url TEXT, secret TEXT,
@@ -378,10 +343,10 @@ def init_db():
             cursor.execute('''INSERT INTO settings 
                          (check_interval, timeout, expected_status, performance_threshold, consecutive_checks,
                          smtp_server, smtp_port, smtp_security, smtp_user, smtp_pass, recipient_email,
-                         from_name, subject_prefix, notification_method, timezone, time_format, theme, email_events, ssl_check_interval)
-                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', 
+                         from_name, subject_prefix, notification_method, timezone, time_format, theme, email_events)
+                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', 
                              (60, 5, 200, 1000, 2, '', 587, 'TLS', '', '', '', '', 'PingDaddyPro:', 'both', 
-                              local_tz, '%Y-%m-%d %H:%M:%S', 'light', '["Back Online", "Offline", "Content Error", "Performance", "SSL Expiration"]', 3600))
+                              local_tz, '%Y-%m-%d %H:%M:%S', 'light', '["Back Online", "Offline", "Content Error", "Performance", "SSL Expiration"]'))
             print("Created default settings")
         
         conn.commit()
@@ -400,7 +365,7 @@ class WebsiteMonitor:
         self.last_check_times = {}
         self.response_times = {}
         self.performance_data = {}
-        self.ssl_last_check_times = {}  # Track last SSL check time for each website
+        self.ssl_certificates_cache = {}  # Cache SSL certificates in memory
         self.webhooks = []
         self.monitor_thread = None
         self.notification_method = 'both'
@@ -413,7 +378,6 @@ class WebsiteMonitor:
         self.check_interval = 60
         self.timeout = 5
         self.expected_status = 200
-        self.ssl_check_interval = 3600  # 1 hour in seconds
         self.performance_threshold = 1000
         self.consecutive_checks_needed = 2
         self.smtp_server = ''
@@ -430,6 +394,7 @@ class WebsiteMonitor:
         self.load_settings()
         self.load_webhooks()
         self.load_websites()
+        self.load_ssl_data_into_memory()
         
     def load_settings(self):
         try:
@@ -456,7 +421,6 @@ class WebsiteMonitor:
                 self.user_timezone = settings['timezone'] or 'UTC'
                 self.time_format = settings['time_format'] or '%Y-%m-%d %H:%M:%S'
                 self.theme = settings['theme'] or 'light'
-                self.ssl_check_interval = settings.get('ssl_check_interval', 3600) or 3600
                 email_events_str = settings['email_events'] if settings['email_events'] else '["online","offline","content_error","performance","ssl_expire"]'
                 try:
                     # Try to parse as JSON first
@@ -481,37 +445,16 @@ class WebsiteMonitor:
             
             cursor, conn = get_db_cursor()
             
-            # Check if ssl_check_interval column exists
-            cursor.execute('''SELECT column_name FROM information_schema.columns 
-                             WHERE table_name='settings' AND column_name='ssl_check_interval' ''')
-            ssl_column_exists = cursor.fetchone() is not None
-            
-            print(f"DEBUG: ssl_check_interval value: {settings.get('ssl_check_interval', 'NOT_FOUND')}")
-            print(f"DEBUG: ssl_column_exists: {ssl_column_exists}")
-            
-            if ssl_column_exists:
-                cursor.execute('''UPDATE settings SET 
-                                 check_interval=%s, timeout=%s, expected_status=%s, performance_threshold=%s, consecutive_checks=%s,
-                                 smtp_server=%s, smtp_port=%s, smtp_security=%s, smtp_user=%s, smtp_pass=%s, recipient_email=%s,
-                                 from_name=%s, subject_prefix=%s, notification_method=%s, timezone=%s, time_format=%s, theme=%s, email_events=%s, ssl_check_interval=%s WHERE id=1''', 
-                             (settings['check_interval'], settings['timeout'], settings['expected_status'], 
-                              settings['performance_threshold'], settings['consecutive_checks'],
-                              settings['smtp_server'], settings['smtp_port'], settings['smtp_security'],
-                              settings['smtp_user'], settings['smtp_pass'], settings['recipient_email'],
-                              settings['from_name'], settings['subject_prefix'], settings['notification_method'],
-                              settings['timezone'], settings['time_format'], settings['theme'], settings['email_events'],
-                              settings.get('ssl_check_interval', 3600)))
-            else:
-                cursor.execute('''UPDATE settings SET 
-                                 check_interval=%s, timeout=%s, expected_status=%s, performance_threshold=%s, consecutive_checks=%s,
-                                 smtp_server=%s, smtp_port=%s, smtp_security=%s, smtp_user=%s, smtp_pass=%s, recipient_email=%s,
-                                 from_name=%s, subject_prefix=%s, notification_method=%s, timezone=%s, time_format=%s, theme=%s, email_events=%s WHERE id=1''', 
-                             (settings['check_interval'], settings['timeout'], settings['expected_status'], 
-                              settings['performance_threshold'], settings['consecutive_checks'],
-                              settings['smtp_server'], settings['smtp_port'], settings['smtp_security'],
-                              settings['smtp_user'], settings['smtp_pass'], settings['recipient_email'],
-                              settings['from_name'], settings['subject_prefix'], settings['notification_method'],
-                              settings['timezone'], settings['time_format'], settings['theme'], settings['email_events']))
+            cursor.execute('''UPDATE settings SET 
+                             check_interval=%s, timeout=%s, expected_status=%s, performance_threshold=%s, consecutive_checks=%s,
+                             smtp_server=%s, smtp_port=%s, smtp_security=%s, smtp_user=%s, smtp_pass=%s, recipient_email=%s,
+                             from_name=%s, subject_prefix=%s, notification_method=%s, timezone=%s, time_format=%s, theme=%s, email_events=%s WHERE id=1''', 
+                         (settings['check_interval'], settings['timeout'], settings['expected_status'], 
+                          settings['performance_threshold'], settings['consecutive_checks'],
+                          settings['smtp_server'], settings['smtp_port'], settings['smtp_security'],
+                          settings['smtp_user'], settings['smtp_pass'], settings['recipient_email'],
+                          settings['from_name'], settings['subject_prefix'], settings['notification_method'],
+                          settings['timezone'], settings['time_format'], settings['theme'], settings['email_events']))
             
             conn.commit()
             conn.close()
@@ -760,6 +703,74 @@ class WebsiteMonitor:
             print(f"Error loading websites: {str(e)}")
             traceback.print_exc()
     
+    def load_ssl_data_into_memory(self):
+        """Load SSL certificate data into memory for faster access"""
+        try:
+            cursor, conn = get_db_cursor()
+            cursor.execute('SELECT * FROM ssl_certificates ORDER BY website, last_checked DESC')
+            ssl_certificates = cursor.fetchall()
+            conn.close()
+            
+            # Clear existing SSL data in memory
+            self.ssl_certificates_cache = {}
+            
+            # Load SSL data into memory cache
+            for cert in ssl_certificates:
+                website = cert['website']
+                if website not in self.ssl_certificates_cache:
+                    self.ssl_certificates_cache[website] = {
+                        'valid_from': cert['valid_from'],
+                        'valid_to': cert['valid_to'],
+                        'issuer': cert['issuer'],
+                        'last_checked': cert['last_checked']
+                    }
+            
+            print(f"SSL data loaded into memory for {len(self.ssl_certificates_cache)} websites")
+        except Exception as e:
+            print(f"Error loading SSL data into memory: {str(e)}")
+            traceback.print_exc()
+    
+    def perform_immediate_ssl_checks(self):
+        """Perform immediate SSL checks for all HTTPS websites"""
+        try:
+            https_websites = [url for url in self.websites if url.startswith('https://')]
+            
+            print(f"DEBUG: perform_immediate_ssl_checks called")
+            print(f"DEBUG: Total websites: {len(self.websites)}")
+            print(f"DEBUG: HTTPS websites: {https_websites}")
+            
+            if not https_websites:
+                print("No HTTPS websites found for immediate SSL check")
+                return
+            
+            print(f"Performing immediate SSL checks for {len(https_websites)} HTTPS websites")
+            
+            for url in https_websites:
+                try:
+                    
+                    # Run SSL check
+                    ssl_info, ssl_status, _ = self.check_ssl_certificate(url)
+                    if ssl_info:
+                        self.store_ssl_certificate_info(url, ssl_info)
+                        print(f"SSL check completed for {url}: {ssl_status}")
+                        
+                        # Emit SSL update via WebSocket
+                        socketio.emit('ssl_update', {
+                            'website': url,
+                            'ssl_info': ssl_info,
+                            'ssl_status': ssl_status
+                        })
+                    else:
+                        print(f"SSL check failed for {url}: {ssl_status}")
+                        
+                except Exception as e:
+                    print(f"Error checking SSL for {url}: {str(e)}")
+            
+            print("Immediate SSL checks completed")
+        except Exception as e:
+            print(f"Error in perform_immediate_ssl_checks: {str(e)}")
+            traceback.print_exc()
+    
     def save_websites(self, websites_data):
         try:
             cursor, conn = get_db_cursor()
@@ -781,6 +792,11 @@ class WebsiteMonitor:
             conn.commit()
             conn.close()
             self.load_websites()
+            
+            print(f"DEBUG: save_websites completed, calling perform_immediate_ssl_checks")
+            # Perform immediate SSL check for new HTTPS websites
+            self.perform_immediate_ssl_checks()
+            
             print("Websites saved successfully")
             return True
         except Exception as e:
@@ -987,8 +1003,8 @@ class WebsiteMonitor:
                     issuer_str = issuer.get('organizationName', 'Unknown')
                     
                     return {
-                        'valid_from': not_before,
-                        'valid_to': not_after,
+                        'valid_from': not_before.isoformat(),
+                        'valid_to': not_after.isoformat(),
                         'issuer': issuer_str,
                         'days_remaining': (not_after - datetime.now()).days
                     }, "Valid", None
@@ -1000,6 +1016,10 @@ class WebsiteMonitor:
         try:
             cursor, conn = get_db_cursor()
             
+            # Convert ISO strings back to datetime objects for database storage
+            valid_from = datetime.fromisoformat(ssl_info['valid_from'].replace('Z', '+00:00'))
+            valid_to = datetime.fromisoformat(ssl_info['valid_to'].replace('Z', '+00:00'))
+            
             # Check if record exists
             cursor.execute('SELECT id FROM ssl_certificates WHERE website=%s', (website,))
             existing = cursor.fetchone()
@@ -1008,18 +1028,26 @@ class WebsiteMonitor:
                 # Update existing record
                 cursor.execute('''UPDATE ssl_certificates SET valid_from=%s, valid_to=%s, 
                            issuer=%s, last_checked=%s WHERE website=%s''',
-                           (ssl_info['valid_from'], ssl_info['valid_to'], 
+                           (valid_from, valid_to, 
                             ssl_info['issuer'], datetime.now(), website))
             else:
                 # Insert new record
                 cursor.execute('''INSERT INTO ssl_certificates 
                            (website, valid_from, valid_to, issuer, last_checked)
                            VALUES (%s, %s, %s, %s, %s)''',
-                           (website, ssl_info['valid_from'], ssl_info['valid_to'], 
+                           (website, valid_from, valid_to, 
                             ssl_info['issuer'], datetime.now()))
             
             conn.commit()
             conn.close()
+            
+            # Update cache
+            self.ssl_certificates_cache[website] = {
+                'valid_from': ssl_info['valid_from'],
+                'valid_to': ssl_info['valid_to'],
+                'issuer': ssl_info['issuer'],
+                'last_checked': datetime.now()
+            }
             
         except Exception as e:
             print(f"Error storing SSL certificate info: {str(e)}")
@@ -1153,25 +1181,18 @@ Ping Daddy - Professional Website Monitoring
             current_time = time.time()
             
             if url.startswith('https://'):
-                # Check if we need to verify SSL certificate
-                last_ssl_check = self.ssl_last_check_times.get(url, 0)
-                print(f"DEBUG SSL: {url} - last_ssl_check: {last_ssl_check}, current_time: {current_time}, interval: {self.ssl_check_interval}")
+                # Always check SSL certificate for HTTPS websites during normal monitoring
+                print(f"DEBUG SSL: Running SSL check for {url}")
+                ssl_info, ssl_status, _ = self.check_ssl_certificate(url)
+                print(f"DEBUG SSL: SSL check completed for {url}, status: {ssl_status}")
                 
-                # For first check (last_ssl_check = 0), always run SSL check
-                # For subsequent checks, respect the interval
-                if last_ssl_check == 0 or current_time - last_ssl_check >= self.ssl_check_interval:
-                    print(f"DEBUG SSL: Running SSL check for {url}")
-                    ssl_info, ssl_status, _ = self.check_ssl_certificate(url)
-                    self.ssl_last_check_times[url] = current_time
-                    print(f"DEBUG SSL: SSL check completed for {url}, status: {ssl_status}")
-                    
-                    # Check for SSL errors
-                    if ssl_status == "Invalid":
-                        return "SSL Error", response_time, f"SSL Certificate Error: {ssl_status}", None
-                    
-                    # Store SSL certificate info
-                    if ssl_info:
-                        self.store_ssl_certificate_info(url, ssl_info)
+                # Check for SSL errors
+                if ssl_status == "Invalid":
+                    return "SSL Error", response_time, f"SSL Certificate Error: {ssl_status}", None
+                
+                # Store SSL certificate info
+                if ssl_info:
+                    self.store_ssl_certificate_info(url, ssl_info)
                         
                     # Check for expiration within 48 hours
                     if ssl_info and ssl_info['days_remaining'] <= 2:  # 2 days = 48 hours
@@ -1477,6 +1498,7 @@ Ping Daddy - Professional Website Monitoring
     def start_monitoring(self):
         """Start the monitoring process"""
         if not self.is_monitoring:
+            
             self.is_monitoring = True
             self.monitor_thread = threading.Thread(target=self.monitor_websites)
             self.monitor_thread.daemon = True
@@ -1519,36 +1541,48 @@ Ping Daddy - Professional Website Monitoring
     def get_ssl_info(self, website):
         """Get SSL certificate information for a website"""
         try:
-            cursor, conn = get_db_cursor()
-            cursor.execute('SELECT * FROM ssl_certificates WHERE website=%s ORDER BY last_checked DESC LIMIT 1', (website,))
-            ssl_data = cursor.fetchone()
-            conn.close()
-            
-            if ssl_data:
+            # First check memory cache
+            if website in self.ssl_certificates_cache:
+                ssl_data = self.ssl_certificates_cache[website]
+                valid_to = ssl_data['valid_to']
+                valid_from = ssl_data['valid_from']
+                last_checked = ssl_data['last_checked']
+                issuer = ssl_data['issuer']
+                website_name = website
+            else:
+                # Fallback to database if not in cache
+                cursor, conn = get_db_cursor()
+                cursor.execute('SELECT * FROM ssl_certificates WHERE website=%s ORDER BY last_checked DESC LIMIT 1', (website,))
+                ssl_data = cursor.fetchone()
+                conn.close()
+                
+                if not ssl_data:
+                    return None
+                
                 valid_to = ssl_data['valid_to']
                 valid_from = ssl_data['valid_from']
                 last_checked = ssl_data['last_checked']
                 issuer = ssl_data['issuer']
                 website_name = ssl_data['website']
-                
-                # Parse datetime if it's a string
-                if isinstance(valid_to, str):
-                    try:
-                        valid_to = dateutil_parser.parse(valid_to)
-                    except:
-                        valid_to = None
-                
-                if isinstance(valid_from, str):
-                    try:
-                        valid_from = dateutil_parser.parse(valid_from)
-                    except:
-                        valid_from = None
-                
-                if isinstance(last_checked, str):
-                    try:
-                        last_checked = dateutil_parser.parse(last_checked)
-                    except:
-                        last_checked = None
+            
+            # Parse datetime if it's a string
+            if isinstance(valid_to, str):
+                try:
+                    valid_to = dateutil_parser.parse(valid_to)
+                except:
+                    valid_to = None
+            
+            if isinstance(valid_from, str):
+                try:
+                    valid_from = dateutil_parser.parse(valid_from)
+                except:
+                    valid_from = None
+            
+            if isinstance(last_checked, str):
+                try:
+                    last_checked = dateutil_parser.parse(last_checked)
+                except:
+                    last_checked = None
                 
                 # Calculate days remaining
                 days_remaining = None
@@ -1782,7 +1816,6 @@ def api_settings():
             'time_format': monitor.time_format,
             'theme': monitor.theme,
             'email_events': monitor.email_events,
-            'ssl_check_interval': monitor.ssl_check_interval
         })
     else:
         data = request.json
@@ -2134,7 +2167,6 @@ def api_reset_settings():
             'timezone': 'UTC',
             'time_format': '%Y-%m-%d %H:%M:%S',
             'theme': 'light',
-            'ssl_check_interval': 3600
         }
         
         if monitor.save_settings(default_settings):
@@ -2148,6 +2180,9 @@ def api_reset_settings():
             # Clear website status tracking
             monitor.website_status = {}
             monitor.website_expected_texts = {}
+            
+            # Clear SSL cache
+            monitor.ssl_certificates_cache = {}
             
             # Clear webhooks
             monitor.webhooks = []
@@ -2178,11 +2213,92 @@ def api_reset_settings():
         print(f"Error resetting settings: {str(e)}")
         return jsonify({'success': False, 'message': f'Error resetting settings: {str(e)}'})
 
-@app.route('/api/settings/test-smtp', methods=['POST'])
-def api_test_smtp():
-    data = request.json
-    success, message = monitor.test_smtp_settings(data)
-    return jsonify({'success': success, 'message': message})
+@app.route('/api/ssl-certificates', methods=['GET'])
+@require_auth
+def api_get_ssl_certificates():
+    """Get all SSL certificates data"""
+    try:
+        cursor, conn = get_db_cursor()
+        cursor.execute('SELECT * FROM ssl_certificates ORDER BY website, last_checked DESC')
+        ssl_certificates = cursor.fetchall()
+        conn.close()
+        
+        # Convert datetime objects to strings for JSON serialization
+        serialized_certificates = []
+        for cert in ssl_certificates:
+            serialized_cert = dict(cert)
+            # Convert datetime objects to ISO format strings
+            for key, value in serialized_cert.items():
+                if hasattr(value, 'isoformat'):  # Check if it's a datetime object
+                    serialized_cert[key] = value.isoformat()
+            serialized_certificates.append(serialized_cert)
+        
+        return jsonify({
+            'success': True,
+            'ssl_certificates': serialized_certificates
+        })
+    except Exception as e:
+        print(f"Error getting SSL certificates: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error getting SSL certificates: {str(e)}'})
+
+@app.route('/api/ssl-certificates', methods=['POST'])
+@require_auth
+def api_import_ssl_certificates():
+    """Import SSL certificates data from backup"""
+    try:
+        data = request.json
+        ssl_certificates = data.get('ssl_certificates', [])
+        
+        if not ssl_certificates:
+            return jsonify({'success': True, 'message': 'No SSL certificates to import'})
+        
+        cursor, conn = get_db_cursor()
+        
+        # Clear existing SSL certificates
+        cursor.execute('DELETE FROM ssl_certificates')
+        
+        # Import SSL certificates
+        for cert in ssl_certificates:
+            # Parse datetime strings back to datetime objects if needed
+            valid_from = cert['valid_from']
+            valid_to = cert['valid_to']
+            last_checked = cert['last_checked']
+            
+            # Convert string dates back to datetime objects if they are strings
+            if isinstance(valid_from, str):
+                try:
+                    valid_from = dateutil_parser.parse(valid_from)
+                except:
+                    valid_from = None
+            
+            if isinstance(valid_to, str):
+                try:
+                    valid_to = dateutil_parser.parse(valid_to)
+                except:
+                    valid_to = None
+            
+            if isinstance(last_checked, str):
+                try:
+                    last_checked = dateutil_parser.parse(last_checked)
+                except:
+                    last_checked = datetime.now()
+            
+            cursor.execute('''INSERT INTO ssl_certificates 
+                           (website, valid_from, valid_to, issuer, last_checked)
+                           VALUES (%s, %s, %s, %s, %s)''',
+                           (cert['website'], valid_from, valid_to, 
+                            cert['issuer'], last_checked))
+        
+        conn.commit()
+        conn.close()
+        
+        # Reload SSL data into memory after import
+        monitor.load_ssl_data_into_memory()
+        
+        return jsonify({'success': True, 'message': f'Imported {len(ssl_certificates)} SSL certificates'})
+    except Exception as e:
+        print(f"Error importing SSL certificates: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error importing SSL certificates: {str(e)}'})
 
 @app.route('/api/cleanup', methods=['POST'])
 @require_auth
@@ -2428,6 +2544,22 @@ def api_debug_brute_force():
 @app.route('/api/is-monitoring')
 def api_is_monitoring():
     return jsonify({'is_monitoring': monitor.is_monitoring})
+
+@app.route('/api/ssl-check-now', methods=['POST'])
+@require_auth
+def api_ssl_check_now():
+    """Force SSL check for all HTTPS websites immediately"""
+    try:
+        # Use the new perform_immediate_ssl_checks function
+        monitor.perform_immediate_ssl_checks()
+        
+        # Count HTTPS websites for response
+        https_count = len([url for url in monitor.websites if url.startswith('https://')])
+        
+        return jsonify({'success': True, 'message': f'SSL check completed for {https_count} HTTPS websites'})
+    except Exception as e:
+        print(f"Error in SSL check now: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error checking SSL: {str(e)}'})
 
 if __name__ == '__main__':
     # Initialize database and create admin user if needed

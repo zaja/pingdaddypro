@@ -15,8 +15,7 @@ A comprehensive web monitoring application built with Flask and Docker, featurin
 - **Real-time Monitoring** - Monitor multiple websites simultaneously
 - **WebSocket Integration** - Real-time frontend status updates using WebSocket instead of JavaScript refresh
 - **Performance Tracking** - Track response times and performance metrics
-- **SSL Certificate Monitoring** - Monitor SSL certificate expiration with configurable check frequency
-- **SSL Check Frequency Setting** - User-configurable SSL certificate check interval in settings (optimized to avoid unnecessary frequent checks)
+- **SSL Certificate Monitoring** - Monitor SSL certificate expiration integrated with normal monitoring cycle
 - **Automated Notifications** - Email and webhook notifications
 - **Admin Authentication** - Secure admin login system
 - **Dark/Light Theme** - Modern UI with theme support
