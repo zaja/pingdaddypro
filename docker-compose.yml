@@ -35,7 +35,7 @@ services:
       retries: 5
 
   pingdaddypro:
-    build: .
+    image: svejedobro/pingdaddypro:latest
     container_name: pingdaddypro
     ports:
       - "5000:5000"
