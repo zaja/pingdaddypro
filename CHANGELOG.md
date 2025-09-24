@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.0.4] - 2025-09-24
+
+### Fixed
+- **Event Consistency**: Fixed inconsistency between webhook and SMTP event names (Text Missing → Content Error)
+- **History Filter**: Fixed missing events in History tab filter (now shows all 5 relevant statuses)
+- **SSL Info Loading**: Fixed slow SSL Info display (reduced from 7-8 seconds to <1 second)
+- **Back Online Event**: Removed "Back Online" from history filter as it's notification-only
+
+### Changed
+- Webhook events now consistently use "Content Error" instead of "Text Missing"
+- History filter now includes: Online, Offline, Content Error, Performance, SSL Expiration
+- SSL Info loads immediately after authentication instead of waiting for WebSocket timeout
+- Optimized SSL data loading in polling mode for faster response
+
+### Added
+- **Development Docker Setup**: Added docker-compose-dev.yml for local development with live code changes
+- **SSL Data in Polling**: SSL data now loads via HTTP API when WebSocket is not available
+- **Improved Error Handling**: Better fallback mechanisms for SSL data loading
+
 ## [1.0.3] - 2025-01-23
 
 ### Added

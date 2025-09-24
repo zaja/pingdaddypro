@@ -1,0 +1,95 @@
+# PingDaddyPro Docker Compose Configuration - Development Version
+# GitHub: https://github.com/zaja/pingdaddypro
+# Development Build: Local build from source
+# Version: 1.0.3-dev
+#
+# Default Access Credentials:
+# Web Application: http://localhost:5000 (admin / admin123)
+# PostgreSQL: localhost:5432 (pingdaddypro / pingdaddypro)
+#
+# Usage: docker-compose -f docker-compose-dev.yml up --build
+
+version: '3.8'
+
+networks:
+  pingdaddypro-network:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: pingdaddypro-postgres-dev
+    environment:
+      POSTGRES_DB: pingdaddypro
+      POSTGRES_USER: pingdaddypro
+      POSTGRES_PASSWORD: pingdaddypro
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - pingdaddypro-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pingdaddypro"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pingdaddypro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pingdaddypro-dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./static:/app/static
+      - ./templates:/app/templates
+      - ./pingdaddypro.py:/app/pingdaddypro.py
+    environment:
+      - FLASK_ENV=development
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://pingdaddypro:pingdaddypro@postgres:5432/pingdaddypro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - pingdaddypro-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: pingdaddypro-nginx-dev
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - pingdaddypro
+    restart: unless-stopped
+    networks:
+      - pingdaddypro-network
+
+volumes:
+  postgres_data_dev:
+
+# After running 'docker-compose -f docker-compose-dev.yml up --build', you can access the application at:
+# http://localhost:5000 or http://YOUR_SERVER_IP:5000
+# Default login: admin / admin123
+#
+# Development setup:
+# - Uses local build from Dockerfile instead of Docker Hub image
+# - Mounts source files for live development
+# - Uses development database volume (postgres_data_dev)
+# - FLASK_ENV=development for better debugging

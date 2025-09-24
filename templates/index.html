@@ -1255,7 +1255,7 @@
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="modalWebhookTextMissing" checked>
-                                <label class="form-check-label" for="modalWebhookTextMissing">Text Missing</label>
+                                <label class="form-check-label" for="modalWebhookTextMissing">Content Error</label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="modalWebhookPerformance" checked>
@@ -1429,19 +1429,9 @@
                     console.log('Requesting initial status...');
                     socket.emit('request_status');
                     
-                    // Wait for status update to create SSL elements, then request SSL data
-                    setTimeout(function() {
-                        const sslElements = document.querySelectorAll('[id^="ssl-info-"]');
-                        console.log(`Found ${sslElements.length} SSL elements, requesting SSL info...`);
-                        if (sslElements.length > 0) {
-                            socket.emit('request_ssl_info');
-                        } else {
-                            console.log('No SSL elements found, waiting another second...');
-                            setTimeout(function() {
-                                socket.emit('request_ssl_info');
-                            }, 1000);
-                        }
-                    }, 1000); // Wait 1 second for status update to complete
+                    // Request SSL data immediately after connection, no need to wait
+                    console.log('Requesting SSL info immediately after connection...');
+                    socket.emit('request_ssl_info');
                     
                     // Set timeout for SSL data only once
                     if (!sslTimeoutSet) {
@@ -1451,7 +1441,7 @@
                                 console.log('SSL data timeout, falling back to HTTP API');
                                 loadSSLDataViaHTTP();
                             }
-                        }, 10000); // 10 second timeout
+                        }, 3000); // 3 second timeout - much faster fallback
                     }
                 });
                 
@@ -1469,7 +1459,7 @@
                     if (!sslDataReceived) {
                         setTimeout(function() {
                             loadSSLDataViaHTTP();
-                        }, 2000); // Wait 2 seconds before trying HTTP fallback
+                        }, 500); // Wait 500ms before trying HTTP fallback
                     }
                 });
                 
@@ -1539,7 +1529,7 @@
                     // Try HTTP fallback for SSL data
                     setTimeout(function() {
                         loadSSLDataViaHTTP();
-                    }, 2000); // Wait 2 seconds before trying HTTP fallback
+                    }, 500); // Wait 500ms before trying HTTP fallback
                 });
                 
             } catch (error) {
@@ -1555,7 +1545,7 @@
                 // Try HTTP fallback for SSL data
                 setTimeout(function() {
                     loadSSLDataViaHTTP();
-                }, 2000); // Wait 2 seconds before trying HTTP fallback
+                }, 500); // Wait 500ms before trying HTTP fallback
             }
         }
         
@@ -1675,6 +1665,9 @@
             });
             
             setupEventListeners();
+            
+            // Load history statuses on initial load (in case History tab is active)
+            loadHistoryStatuses();
             
             // Add tab switching event listeners
             document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
@@ -1828,6 +1821,11 @@
                 .then(data => {
                     updateWebsitesStatus(data);
                     updateQuickStats(data);
+                    
+                    // Also load SSL data when using polling
+                    if (!sslDataReceived) {
+                        loadSSLDataViaHTTP();
+                    }
                 })
                 .catch(error => console.error('Error fetching status:', error));
         }
@@ -2120,6 +2118,11 @@
             loadWebhooks();
             checkMonitoringStatus();
             loadWebsites();
+            
+            // Load SSL data immediately after authentication
+            setTimeout(function() {
+                loadSSLDataViaHTTP();
+            }, 1000); // Wait 1 second for websites to load first
         }
 
         function showLoginModal() {
@@ -2503,14 +2506,29 @@
                 return;
             }
             
+            // Map raw database statuses to user-friendly names (consistent with email/webhook events)
+            // Note: "Online" -> "Back Online" mapping removed as Back Online is not used in history
+            const statusDisplayMapping = {
+                "Content Error": "Content Error",
+                "Performance Issue": "Performance",
+                "SSL Expiration": "SSL Expiration",
+                // Group all error types under "Offline"
+                "DNS Error": "Offline",
+                "Timeout Error": "Offline",
+                "Connection Error": "Offline",
+                "SSL Error": "Offline",
+                "Status Error": "Offline"
+            };
+            
             let html = '';
             history.forEach(record => {
+                const displayStatus = statusDisplayMapping[record.status] || record.status;
                 const statusClass = getStatusClass(record.status);
                 html += `
                     <tr>
                         <td>${record.timestamp}</td>
                         <td>${record.website}</td>
-                        <td class="${statusClass}">${record.status}</td>
+                        <td class="${statusClass}">${displayStatus}</td>
                         <td>${record.response_time}ms</td>
                         <td>${record.details}</td>
                     </tr>

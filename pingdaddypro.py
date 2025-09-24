@@ -881,8 +881,26 @@ class WebsiteMonitor:
                 params.append(website_filter)
                 
             if status_filter:
-                conditions.append(' status = %s')
-                params.append(status_filter)
+                # Map user-friendly status names back to raw database statuses
+                # Note: "Back Online" is removed as it's not used in history filtering
+                reverse_status_mapping = {
+                    "Offline": ["DNS Error", "Timeout Error", "Connection Error", "SSL Error", "Status Error"],
+                    "Content Error": ["Content Error"],
+                    "Performance": ["Performance Issue"],
+                    "SSL Expiration": ["SSL Expiration"]
+                }
+                
+                # Get raw statuses for the user-friendly status
+                raw_statuses = reverse_status_mapping.get(status_filter, [status_filter])
+                
+                if len(raw_statuses) == 1:
+                    conditions.append(' status = %s')
+                    params.append(raw_statuses[0])
+                else:
+                    # Multiple raw statuses map to one user-friendly status (e.g., Offline)
+                    placeholders = ','.join(['%s'] * len(raw_statuses))
+                    conditions.append(f' status IN ({placeholders})')
+                    params.extend(raw_statuses)
             
             # Add date range filtering
             if date_from:
@@ -1651,14 +1669,14 @@ def handle_ssl_request():
     ssl_data = {}
     for website in monitor.websites:
         if website.startswith('https://'):
-            print(f"DEBUG: Getting SSL info for {website}")
+            # Use cached SSL data for faster response
             ssl_info = monitor.get_ssl_info(website)
             if ssl_info:
                 ssl_data[website] = ssl_info
-                print(f"DEBUG: SSL info for {website}: {ssl_info}")
+                print(f"DEBUG: SSL info for {website}: {ssl_info['days_remaining']} days remaining")
             else:
                 print(f"DEBUG: No SSL info found for {website}")
-    print(f"DEBUG: Emitting ssl_data: {ssl_data}")
+    print(f"DEBUG: Emitting ssl_data for {len(ssl_data)} websites")
     emit('ssl_data', ssl_data)
 
 # Flask routes
@@ -2019,23 +2037,43 @@ def api_history_statuses():
     try:
         # Get statuses that actually trigger notifications (from history table)
         cursor, conn = get_db_cursor()
-        cursor.execute('SELECT DISTINCT status FROM history ORDER BY status')
-        notification_statuses = [row['status'] for row in cursor.fetchall()]
+        cursor.execute('SELECT DISTINCT status FROM performance_data ORDER BY status')
+        raw_statuses = [row['status'] for row in cursor.fetchall()]
         conn.close()
         
-        # If no notification statuses exist yet, return common ones
-        if not notification_statuses:
-            notification_statuses = ["Online", "DNS Error", "Timeout Error", "Connection Error", 
-                                    "SSL Error", "SSL Expiration", "Status Error", "Content Error", "Performance Issue"]
+        # Map raw statuses to user-friendly names (consistent with email/webhook events)
+        # Note: "Online" -> "Back Online" mapping removed as Back Online is not used in history
+        status_mapping = {
+            "Content Error": "Content Error",
+            "Performance Issue": "Performance",
+            "SSL Expiration": "SSL Expiration",
+            # Group all error types under "Offline"
+            "DNS Error": "Offline",
+            "Timeout Error": "Offline", 
+            "Connection Error": "Offline",
+            "SSL Error": "Offline",
+            "Status Error": "Offline"
+        }
         
-        # Always include SSL Expiration if it's not already there (since it's a special notification type)
-        if "SSL Expiration" not in notification_statuses:
-            notification_statuses.append("SSL Expiration")
+        # Apply mapping and remove duplicates
+        notification_statuses = []
+        for status in raw_statuses:
+            mapped_status = status_mapping.get(status, status)
+            if mapped_status not in notification_statuses:
+                notification_statuses.append(mapped_status)
+        
+        # Always include all standard notification statuses, even if not yet present in database
+        # Note: "Back Online" is removed from history filter as it's only for notifications
+        standard_statuses = ["Online", "Offline", "Content Error", "Performance", "SSL Expiration"]
+        for status in standard_statuses:
+            if status not in notification_statuses:
+                notification_statuses.append(status)
         
         return jsonify({'statuses': notification_statuses})
     except Exception as e:
         print(f"Error getting history statuses: {str(e)}")
-        return jsonify({'statuses': []})
+        # Return standard statuses even if database query fails
+        return jsonify({'statuses': ["Online", "Offline", "Content Error", "Performance", "SSL Expiration"]})
 
 @app.route('/api/history')
 def api_history():
