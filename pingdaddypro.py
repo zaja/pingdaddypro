@@ -1534,55 +1534,55 @@ Ping Daddy - Professional Website Monitoring
             if isinstance(valid_to, str):
                 try:
                     valid_to = dateutil_parser.parse(valid_to)
-                except:
+                except Exception as e:
                     valid_to = None
             
             if isinstance(valid_from, str):
                 try:
                     valid_from = dateutil_parser.parse(valid_from)
-                except:
+                except Exception as e:
                     valid_from = None
             
             if isinstance(last_checked, str):
                 try:
                     last_checked = dateutil_parser.parse(last_checked)
-                except:
+                except Exception as e:
                     last_checked = None
-                
-                # Calculate days remaining
-                days_remaining = None
-                if valid_to:
-                    try:
-                        # Ensure both are timezone-aware
-                        if valid_to.tzinfo is None:
-                            valid_to = pytz.UTC.localize(valid_to)
-                        now = datetime.now(pytz.UTC)
-                        days_remaining = (valid_to - now).days
-                    except Exception as e:
-                        print(f"Error calculating days remaining: {e}")
-                        days_remaining = None
-                
-                # Convert datetime objects to ISO strings for JSON serialization
-                def safe_isoformat(dt):
-                    if dt is None:
-                        return None
-                    try:
-                        if hasattr(dt, 'isoformat'):
-                            return dt.isoformat()
-                        return str(dt)
-                    except:
-                        return str(dt)
-                
-                return {
-                    'website': website_name,
-                    'valid_from': safe_isoformat(valid_from),
-                    'valid_to': safe_isoformat(valid_to),
-                    'issuer': issuer,
-                    'last_checked': safe_isoformat(last_checked),
-                    'days_remaining': days_remaining
-                }
-            else:
-                return None
+            
+            # Calculate days remaining
+            days_remaining = None
+            if valid_to:
+                try:
+                    # Ensure both are timezone-aware
+                    if valid_to.tzinfo is None:
+                        valid_to = pytz.UTC.localize(valid_to)
+                    now = datetime.now(pytz.UTC)
+                    days_remaining = (valid_to - now).days
+                except Exception as e:
+                    print(f"Error calculating days remaining: {e}")
+                    traceback.print_exc()
+                    days_remaining = None
+            
+            # Convert datetime objects to ISO strings for JSON serialization
+            def safe_isoformat(dt):
+                if dt is None:
+                    return None
+                try:
+                    if hasattr(dt, 'isoformat'):
+                        return dt.isoformat()
+                    return str(dt)
+                except:
+                    return str(dt)
+            
+            result = {
+                'website': website_name,
+                'valid_from': safe_isoformat(valid_from),
+                'valid_to': safe_isoformat(valid_to),
+                'issuer': issuer,
+                'last_checked': safe_isoformat(last_checked),
+                'days_remaining': days_remaining
+            }
+            return result
                 
         except Exception as e:
             print(f"Error getting SSL info: {str(e)}")
