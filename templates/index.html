@@ -1421,16 +1421,13 @@
                 socket = io();
                 
                 socket.on('connect', function() {
-                    console.log('WebSocket connected');
                     sslDataReceived = false;
                     sslTimeoutSet = false;
                     
                     // Request initial status
-                    console.log('Requesting initial status...');
                     socket.emit('request_status');
                     
                     // Request SSL data immediately after connection, no need to wait
-                    console.log('Requesting SSL info immediately after connection...');
                     socket.emit('request_ssl_info');
                     
                     // Set timeout for SSL data only once
@@ -1438,7 +1435,6 @@
                         sslTimeoutSet = true;
                         setTimeout(function() {
                             if (!sslDataReceived) {
-                                console.log('SSL data timeout, falling back to HTTP API');
                                 loadSSLDataViaHTTP();
                             }
                         }, 3000); // 3 second timeout - much faster fallback
@@ -1446,7 +1442,6 @@
                 });
                 
                 socket.on('disconnect', function() {
-                    console.log('WebSocket disconnected');
                     sslDataReceived = false;
                     sslTimeoutSet = false;
                     
@@ -1464,50 +1459,35 @@
                 });
                 
                 socket.on('status_update', function(data) {
-                    console.log('Received WebSocket status update:', data);
                     updateWebsitesStatus(data);
                     updateQuickStats(data);
                 });
                 
                 socket.on('ssl_update', function(data) {
-                    console.log('Received WebSocket SSL update:', data);
                     updateSSLStatus(data.website, data.ssl_info, data.ssl_status);
                 });
                 
                 socket.on('ssl_data', function(data) {
-                    console.log('Received WebSocket SSL data:', data);
-                    console.log('SSL data keys:', Object.keys(data));
-                    console.log('SSL data length:', Object.keys(data).length);
-                    console.log('SSL data details:', JSON.stringify(data, null, 2));
                     sslDataReceived = true; // Mark that we received SSL data
                     
                     if (Object.keys(data).length === 0) {
-                        console.log('No SSL data received, checking if websites are HTTPS');
                         // Update all HTTPS websites to show "No data available"
                         const sslElements = document.querySelectorAll('[id^="ssl-info-"]');
-                        console.log('Found SSL elements:', sslElements.length);
                         sslElements.forEach(element => {
                             // Extract website URL from element ID
                             const id = element.id.replace('ssl-info-', '');
                             // Convert back from sanitized ID to URL
                             const website = id.replace(/-/g, '/').replace(/\/\//g, '://');
-                            console.log('Processing SSL element for website:', website);
                             if (website.startsWith('https://')) {
                                 element.innerHTML = '<span class="ssl-na">No data available</span>';
                             }
                         });
                     } else {
-                        console.log('Processing SSL data for websites:', Object.keys(data));
                         for (const [website, sslInfo] of Object.entries(data)) {
-                            console.log(`Updating SSL status for ${website}:`, sslInfo);
-                            console.log(`About to call updateSSLStatus for ${website}`);
                             // Try to update SSL status, if element doesn't exist, wait and try again
                             const result = updateSSLStatus(website, sslInfo, 'Valid');
-                            console.log(`updateSSLStatus result for ${website}:`, result);
                             if (!result) {
-                                console.log(`SSL element not found for ${website}, will retry in 1 second`);
                                 setTimeout(() => {
-                                    console.log(`Retrying updateSSLStatus for ${website}`);
                                     updateSSLStatus(website, sslInfo, 'Valid');
                                 }, 1000);
                             }
@@ -1517,7 +1497,6 @@
                 
                 
                 socket.on('connect_error', function(error) {
-                    console.log('WebSocket connection error:', error);
                     sslDataReceived = false;
                     sslTimeoutSet = false;
                     
@@ -1570,7 +1549,6 @@
                         link.style.setProperty('background-color', '#28a745', 'important');
                         link.style.setProperty('border-color', '#28a745', 'important');
                         link.style.setProperty('color', '#ffffff', 'important');
-                        console.log('Applied green to active tab:', link.textContent);
                     } else {
                         link.style.setProperty('background-color', '#21262d', 'important');
                         link.style.setProperty('color', '#e6edf3', 'important');
@@ -1674,7 +1652,6 @@
                 tab.addEventListener('shown.bs.tab', function(event) {
                     const targetTab = event.target.getAttribute('data-bs-target');
                     if (targetTab === '#history') {
-                        console.log('DEBUG: History tab activated, loading history...');
                         loadHistoryStatuses();
                         setDefaultDateRange();
                         loadHistory();
@@ -1686,7 +1663,6 @@
         // Simple tab initialization
         function initializeTabs() {
             // Remove custom tab initialization - let Bootstrap handle it naturally
-            console.log('Tabs initialized');
         }
 
         function setupEventListeners() {
@@ -1699,7 +1675,6 @@
             document.getElementById('settingsForm').addEventListener('submit', saveSettings);
             document.getElementById('testSmtp').addEventListener('click', testSmtpSettings);
             document.getElementById('theme').addEventListener('change', function() {
-                console.log('Theme changed to:', this.value);
                 applyTheme(this.value);
             });
             
@@ -1796,13 +1771,11 @@
 
         function startStatusUpdates() {
             if (useWebSocket && socket && socket.connected) {
-                // Use WebSocket - no need for polling
-                console.log('Using WebSocket for status updates');
-                return;
-            }
-            
-            // Fallback to polling if WebSocket is not available
-            console.log('Using polling for status updates');
+            // Use WebSocket - no need for polling
+            return;
+        }
+        
+        // Fallback to polling if WebSocket is not available
             if (statusInterval) clearInterval(statusInterval);
             statusInterval = setInterval(updateStatus, 2000);
             updateStatus();
@@ -2076,15 +2049,11 @@
 
         function applyTheme(theme) {
             const body = document.body;
-            console.log('Applying theme:', theme);
             if (theme === 'dark') {
                 body.classList.add('dark-theme');
-                console.log('Dark theme class added');
             } else {
                 body.classList.remove('dark-theme');
-                console.log('Light theme - dark class removed');
             }
-            console.log('Body classes:', body.className);
         }
 
         // Authentication functions
@@ -2282,7 +2251,6 @@
                     }
                     
                     // Apply theme
-                    console.log('Loading theme from settings:', settings.theme || 'light');
                     applyTheme(settings.theme || 'light');
                     
                     // Load websites
@@ -2330,7 +2298,6 @@
             // Load history if History tab is active
             const historyTab = document.getElementById('history-tab');
             if (historyTab && historyTab.classList.contains('active')) {
-                console.log('DEBUG: History tab is active after website update, loading history...');
                 loadHistoryStatuses();
                 loadHistory();
             }
@@ -2380,9 +2347,6 @@
             // Convert array to JSON string for storage
             settings.email_events = JSON.stringify(settings.email_events);
             
-            // Debug: Log what we're sending
-            console.log('DEBUG: Sending email_events:', settings.email_events);
-            console.log('DEBUG: email_events type:', typeof settings.email_events);
             
             const websites = document.getElementById('websitesList').value.split('\n')
                 .filter(line => line.trim())
@@ -2441,7 +2405,6 @@
                         statusDropdown.appendChild(option);
                     });
                     
-                    console.log('DEBUG: Loaded history statuses:', data.statuses);
                 })
                 .catch(error => console.error('Error loading history statuses:', error));
         }
@@ -2470,26 +2433,18 @@
         }
 
         function loadHistory() {
-            console.log('DEBUG: loadHistory called');
-            
             // Check if History tab is active
             const historyTab = document.getElementById('history-tab');
             if (!historyTab || !historyTab.classList.contains('active')) {
-                console.log('DEBUG: History tab is not active, skipping loadHistory');
                 return;
             }
-            
-            console.log('DEBUG: History tab is active, loading data...');
             
             const offset = (currentHistoryPage - 1) * currentHistoryLimit;
             const url = `/api/history?limit=${currentHistoryLimit}&offset=${offset}&website=${currentHistoryFilters.website}&status=${currentHistoryFilters.status}&dateFrom=${currentHistoryFilters.dateFrom}&dateTo=${currentHistoryFilters.dateTo}`;
             
-            console.log(`DEBUG: Loading history from URL: ${url}`);
-            
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    console.log('DEBUG: History data received:', data);
                     updateHistoryTable(data.history);
                     updateHistoryStats(data);
                     updatePagination(data);
@@ -3254,11 +3209,6 @@
                 try {
                     const backupData = JSON.parse(e.target.result);
                     
-                    // Debug: Log backup data structure
-                    console.log('Backup data structure:', backupData);
-                    console.log('Settings:', backupData.data.settings);
-                    console.log('Websites:', backupData.data.websites);
-                    console.log('Webhooks:', backupData.data.webhooks);
                     
                     // Validate backup format
                     if (!backupData.data || !backupData.data.settings) {
@@ -3273,7 +3223,6 @@
                             const settingsToImport = { ...backupData.data.settings };
                             if (settingsToImport.email_events && Array.isArray(settingsToImport.email_events)) {
                                 settingsToImport.email_events = JSON.stringify(settingsToImport.email_events);
-                                console.log('Converted email_events from array to JSON string:', settingsToImport.email_events);
                             }
                             
                             fetch('/api/settings', {
@@ -3291,8 +3240,6 @@
                                 
                                 // Import websites
                                 const websitesData = backupData.data.websites.websites || [];
-                                console.log('Importing websites:', websitesData);
-                                console.log('DEBUG: About to call /api/websites with data:', { websites: websitesData });
                                 return fetch('/api/websites', {
                                     method: 'POST',
                                     headers: {
@@ -3309,13 +3256,8 @@
                                 
                                 // Import webhooks
                                 const webhooksData = backupData.data.webhooks.webhooks || [];
-                                console.log('Importing webhooks:', webhooksData);
-                                console.log('Webhooks data type:', typeof webhooksData);
-                                console.log('Webhooks data length:', webhooksData.length);
-                                console.log('First webhook:', webhooksData[0]);
                                 
                                 if (webhooksData.length === 0) {
-                                    console.log('No webhooks to import, skipping...');
                                     return Promise.resolve({success: true, message: 'No webhooks to import'});
                                 }
                                 
@@ -3327,12 +3269,8 @@
                                     body: JSON.stringify({ webhooks: webhooksData })
                                 });
                             })
-                            .then(response => {
-                                console.log('Webhooks bulk response:', response);
-                                return response.json();
-                            })
+                            .then(response => response.json())
                             .then(webhooksResult => {
-                                console.log('Webhooks bulk result:', webhooksResult);
                                 if (!webhooksResult.success) {
                                     throw new Error('Failed to import webhooks: ' + webhooksResult.message);
                                 }
@@ -3340,7 +3278,6 @@
                                 // Import SSL certificates if available
                                 const sslData = backupData.data.ssl_certificates;
                                 if (sslData && sslData.ssl_certificates && sslData.ssl_certificates.length > 0) {
-                                    console.log('Importing SSL certificates:', sslData.ssl_certificates);
                                     return fetch('/api/ssl-certificates', {
                                         method: 'POST',
                                         headers: {
@@ -3349,7 +3286,6 @@
                                         body: JSON.stringify(sslData)
                                     });
                                 } else {
-                                    console.log('No SSL certificates to import');
                                     return Promise.resolve({success: true, message: 'No SSL certificates to import'});
                                 }
                             })

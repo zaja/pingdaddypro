@@ -104,24 +104,19 @@ def is_account_locked(username, ip_address):
             print(f"WARNING: Invalid IP address detected: {ip_address}")
             ip_address = "invalid_ip"  # Use fallback for invalid IPs
         
-        print(f"DEBUG LOCK CHECK: Checking lock for username={username}, ip={ip_address}")
         cursor, conn = get_db_cursor()
         
         # Check user lockout
         cursor.execute('SELECT failed_attempts, locked_until FROM admin_users WHERE username = %s', (username,))
         user = cursor.fetchone()
         
-        print(f"DEBUG LOCK CHECK: User data: {user}")
-        
         if user and user['locked_until']:
             # Check if lockout has expired (15 minutes)
             if datetime.now() < user['locked_until']:
-                print(f"DEBUG LOCK CHECK: Account locked until {user['locked_until']}")
                 conn.close()
                 return True
             else:
                 # Lockout expired, reset it
-                print(f"DEBUG LOCK CHECK: Lockout expired, resetting")
                 cursor.execute('UPDATE admin_users SET failed_attempts = 0, locked_until = NULL WHERE username = %s', (username,))
                 conn.commit()
         
@@ -132,13 +127,10 @@ def is_account_locked(username, ip_address):
                       (ip_address, fifteen_minutes_ago))
         ip_attempts = cursor.fetchone()['count']
         
-        print(f"DEBUG LOCK CHECK: IP attempts in last 15 min: {ip_attempts}")
-        
         conn.close()
         
         # Lock IP if more than 10 failed attempts in 15 minutes
         ip_locked = ip_attempts >= 10
-        print(f"DEBUG LOCK CHECK: IP locked: {ip_locked}")
         return ip_locked
         
     except Exception as e:
@@ -174,7 +166,6 @@ def record_login_attempt(username, ip_address, success):
 def handle_failed_login(username, ip_address):
     """Handle failed login attempt and implement lockout"""
     try:
-        print(f"DEBUG FAILED LOGIN: Handling failed login for {username} from {ip_address}")
         cursor, conn = get_db_cursor()
         
         # Increment failed attempts
@@ -185,14 +176,11 @@ def handle_failed_login(username, ip_address):
         cursor.execute('SELECT failed_attempts FROM admin_users WHERE username = %s', (username,))
         user = cursor.fetchone()
         
-        print(f"DEBUG FAILED LOGIN: Current failed attempts: {user['failed_attempts'] if user else 'No user found'}")
-        
         if user and user['failed_attempts'] >= 4:
             # Lock account for 15 minutes
             lockout_until = datetime.now() + timedelta(minutes=15)
             cursor.execute('''UPDATE admin_users SET locked_until = %s 
                              WHERE username = %s''', (lockout_until, username))
-            print(f"DEBUG FAILED LOGIN: Account {username} locked until {lockout_until}")
         
         conn.commit()
         conn.close()
@@ -434,10 +422,6 @@ class WebsiteMonitor:
     
     def save_settings(self, settings):
         try:
-            # Debug: Print email_events value
-            print(f"DEBUG: email_events received: {settings.get('email_events', 'NOT_FOUND')}")
-            print(f"DEBUG: email_events type: {type(settings.get('email_events', 'NOT_FOUND'))}")
-            
             # Ensure email_events exists with default value
             if 'email_events' not in settings:
                 settings['email_events'] = '["Back Online", "Offline", "Content Error", "Performance", "SSL Expiration"]'
@@ -565,7 +549,6 @@ class WebsiteMonitor:
             cursor, conn = get_db_cursor()
             
             events_str = ','.join(webhook_data['events']) if webhook_data['events'] else ''
-            print(f"Saving webhook: {webhook_data['name']} with events: {webhook_data['events']} -> events_str: '{events_str}'")
             
             # Prepare data
             name = webhook_data['name']
@@ -577,21 +560,12 @@ class WebsiteMonitor:
                 cursor.execute('''UPDATE webhooks SET name=%s, url=%s, secret=%s, events=%s, active=%s
                              WHERE id=%s''', 
                              (name, url, secret, events_str, active, webhook_data['id']))
-                print(f"DEBUG: Updated webhook with ID {webhook_data['id']}")
             else:
                 cursor.execute('''INSERT INTO webhooks (name, url, secret, events, active)
                              VALUES (%s, %s, %s, %s, %s)''', 
                              (name, url, secret, events_str, active))
-                print(f"DEBUG: Inserted new webhook")
             
             conn.commit()
-            print(f"DEBUG: Committed webhook to database")
-            
-            # Verify the webhook was saved
-            cursor.execute('SELECT COUNT(*) FROM webhooks')
-            count_result = cursor.fetchone()
-            count = count_result['count'] if isinstance(count_result, dict) else count_result[0]
-            print(f"DEBUG: Total webhooks in database after save: {count}")
             
             conn.close()
             return True
@@ -607,7 +581,6 @@ class WebsiteMonitor:
             
             # Clear existing webhooks
             cursor.execute('DELETE FROM webhooks')
-            print("DEBUG: Cleared existing webhooks")
             
             # Insert new webhooks
             for i, webhook_data in enumerate(webhooks_data):
@@ -617,22 +590,13 @@ class WebsiteMonitor:
                              (webhook_data['name'], webhook_data['url'], 
                               webhook_data.get('secret', ''), events_str, 
                               webhook_data.get('active', True)))
-                print(f"DEBUG: Inserted webhook {i+1}: {webhook_data['name']}")
             
             conn.commit()
-            print("DEBUG: Committed all webhooks to database")
-            
-            # Verify the webhooks were saved
-            cursor.execute('SELECT COUNT(*) FROM webhooks')
-            count_result = cursor.fetchone()
-            count = count_result['count'] if isinstance(count_result, dict) else count_result[0]
-            print(f"DEBUG: Total webhooks in database after bulk save: {count}")
             
             conn.close()
             
             # Reload webhooks into memory
             self.load_webhooks()
-            print(f"DEBUG: Webhooks reloaded into memory: {len(self.webhooks)}")
             
             return True
         except Exception as e:
@@ -647,18 +611,8 @@ class WebsiteMonitor:
             
             # Check how many webhooks exist before clearing
             cursor.execute('SELECT COUNT(*) FROM webhooks')
-            count_result = cursor.fetchone()
-            count_before = count_result['count'] if isinstance(count_result, dict) else count_result[0]
-            print(f"DEBUG: Webhooks in database before clearing: {count_before}")
-            
             # Clear all webhooks
             cursor.execute('DELETE FROM webhooks')
-            
-            # Check how many webhooks exist after clearing
-            cursor.execute('SELECT COUNT(*) FROM webhooks')
-            count_result = cursor.fetchone()
-            count_after = count_result['count'] if isinstance(count_result, dict) else count_result[0]
-            print(f"DEBUG: Webhooks in database after clearing: {count_after}")
             
             conn.commit()
             conn.close()
@@ -734,10 +688,6 @@ class WebsiteMonitor:
         try:
             https_websites = [url for url in self.websites if url.startswith('https://')]
             
-            print(f"DEBUG: perform_immediate_ssl_checks called")
-            print(f"DEBUG: Total websites: {len(self.websites)}")
-            print(f"DEBUG: HTTPS websites: {https_websites}")
-            
             if not https_websites:
                 print("No HTTPS websites found for immediate SSL check")
                 return
@@ -792,7 +742,6 @@ class WebsiteMonitor:
             conn.close()
             self.load_websites()
             
-            print(f"DEBUG: save_websites completed, calling perform_immediate_ssl_checks")
             # Perform immediate SSL check for new HTTPS websites
             self.perform_immediate_ssl_checks()
             
@@ -1199,9 +1148,7 @@ Ping Daddy - Professional Website Monitoring
             
             if url.startswith('https://'):
                 # Always check SSL certificate for HTTPS websites during normal monitoring
-                print(f"DEBUG SSL: Running SSL check for {url}")
                 ssl_info, ssl_status, _ = self.check_ssl_certificate(url)
-                print(f"DEBUG SSL: SSL check completed for {url}, status: {ssl_status}")
                 
                 # Check for SSL errors
                 if ssl_status == "Invalid":
@@ -1427,8 +1374,6 @@ Ping Daddy - Professional Website Monitoring
                         else:
                             self.website_status[website]['consecutive_failures'] = 0
                         
-                        print(f"DEBUG: {website} - Status: {status}, Previous: {previous_status}, Consecutive failures: {self.website_status[website]['consecutive_failures']}, Needed: {self.consecutive_checks_needed}")
-                        
                         # Trigger notifications when:
                         # 1. Status changes AND consecutive failures >= consecutive_checks_needed, OR
                         # 2. First time reaching error status AND consecutive failures >= consecutive_checks_needed, OR
@@ -1438,23 +1383,18 @@ Ping Daddy - Professional Website Monitoring
                         
                         if status != previous_status and self.website_status[website]['consecutive_failures'] >= self.consecutive_checks_needed:
                             should_notify = True
-                            print(f"DEBUG: Condition 1 met for {website} - Status changed")
                         elif (status != "Online" and 
                               self.website_status[website]['consecutive_failures'] >= self.consecutive_checks_needed and 
                               previous_status == "Online"):
                             should_notify = True
-                            print(f"DEBUG: Condition 2 met for {website} - First error")
                         elif (status != "Online" and 
                               self.website_status[website]['consecutive_failures'] == self.consecutive_checks_needed and
                               self.website_status[website].get('last_notification_status') != status):
                             should_notify = True
-                            print(f"DEBUG: Condition 3 met for {website} - Reached threshold")
                         elif (status == "Online" and previous_status != "Online"):
                             should_notify = True
-                            print(f"DEBUG: Condition 4 met for {website} - Recovered to Online")
                         
                         if should_notify:
-                            print(f"DEBUG: Sending notification for {website} - Status: {status}, Previous: {previous_status}, Consecutive failures: {self.website_status[website]['consecutive_failures']}, Needed: {self.consecutive_checks_needed}")
                             
                             # Create custom message for Content Error recovery
                             notification_details = details
@@ -1484,7 +1424,6 @@ Ping Daddy - Professional Website Monitoring
                                     self.send_email_notification(website, status, response_time, notification_details)
                                 
                             if notification_method in ['webhook', 'both']:
-                                print(f"DEBUG: Sending webhook for {website}")
                                 self.send_webhook_for_event(status, website, response_time, notification_details)
                             
                             # Update last notification status to prevent duplicates
@@ -1665,7 +1604,6 @@ def handle_status_request():
 @socketio.on('request_ssl_info')
 def handle_ssl_request():
     """Handle SSL info request from client"""
-    print(f"DEBUG: SSL info request received, websites: {monitor.websites}")
     ssl_data = {}
     for website in monitor.websites:
         if website.startswith('https://'):
@@ -1673,10 +1611,6 @@ def handle_ssl_request():
             ssl_info = monitor.get_ssl_info(website)
             if ssl_info:
                 ssl_data[website] = ssl_info
-                print(f"DEBUG: SSL info for {website}: {ssl_info['days_remaining']} days remaining")
-            else:
-                print(f"DEBUG: No SSL info found for {website}")
-    print(f"DEBUG: Emitting ssl_data for {len(ssl_data)} websites")
     emit('ssl_data', ssl_data)
 
 # Flask routes
@@ -1721,21 +1655,16 @@ def api_login():
         # Get real client IP address
         ip_address = get_client_ip()
         
-        print(f"DEBUG LOGIN: Username={username}, IP={ip_address}")
-        
         if not username or not password:
             return jsonify({'success': False, 'message': 'Username and password required'})
         
         # Check if account is locked
         locked = is_account_locked(username, ip_address)
-        print(f"DEBUG LOGIN: Account locked check result: {locked}")
         
         if locked:
-            print(f"DEBUG LOGIN: Account {username} is locked!")
             return jsonify({'success': False, 'message': 'Account temporarily locked due to multiple failed attempts. Please try again in 15 minutes.'})
         
         login_result = login_user(username, password, ip_address)
-        print(f"DEBUG LOGIN: Login result: {login_result}")
         
         if login_result:
             session['authenticated'] = True
